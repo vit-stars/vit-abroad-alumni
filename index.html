@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-mapmode="normal">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>VIT Stars Alumni – Global Map</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+/* ══ TOKENS ════════════════════════════════════════════════════ */
+:root{
+  --bg:#f8f9fa;--s1:#ffffff;--s2:#f1f3f4;--s3:#e8eaf0;
+  --bd:rgba(0,0,0,.08);--bd2:rgba(0,0,0,.14);
+  --t1:#202124;--t2:#5f6368;--t3:#9aa0a6;
+  --ac:#1a73e8;--ac2:#4285f4;--acbg:rgba(26,115,232,.08);--acbg2:rgba(26,115,232,.16);
+  --am:#f29900;--am2:#fbbc04;--ambg:rgba(251,188,4,.1);
+  --red:#d93025;--grn:#34a853;
+  --sh:rgba(0,0,0,.12);--sh2:rgba(0,0,0,.06);
+  --bar:54px;--panel-w:440px;
+  --fd:'Playfair Display',serif;--fb:'Inter',sans-serif;--ease:.3s cubic-bezier(.4,0,.2,1);
+  /* map mode colours — normal (Google Maps style) */
+  --ocean:#aadaff;--land-empty:#d4f589a4;--border-empty:#121312;
+}
+/* ── Dark Mode ── */
+[data-theme="dark"]{
+  --bg:#111318;--s1:#1e2128;--s2:#272b34;--s3:#313640;
+  --bd:rgba(255,255,255,.09);--bd2:rgba(255,255,255,.16);
+  --t1:#e3e6ed;--t2:#9aa3b2;--t3:#5c6470;
+  --ac:#7cb8ff;--ac2:#a8d1ff;--acbg:rgba(124,184,255,.1);--acbg2:rgba(124,184,255,.2);
+  --am:#ffd166;--am2:#ffe099;--ambg:rgba(255,209,102,.1);
+  --red:#ff8080;--grn:#4ddb8a;
+  --sh:rgba(0,0,0,.6);--sh2:rgba(0,0,0,.4);
+  /* Dark ocean: deep teal-blue (like real night sea, not black) */
+  --ocean:#0e2a45;
+  /* Empty country: slate grey, clearly different from ocean */
+  --land-empty:#2c3140;
+  --border-empty:#3e4455;
+}
+/* ── Map Mode: Terrain ── */
+[data-mapmode="terrain"]{
+  --ocean:#93c9e3;--land-empty:#e5e0d8;--border-empty:#b8b0a0;
+}
+[data-theme="dark"][data-mapmode="terrain"]{
+  --ocean:#0a1e2e;--land-empty:#1e1a14;--border-empty:#2e2820;
+}
+/* ── Map Mode: Satellite ── */
+[data-mapmode="satellite"]{
+  --ocean:#1a3550;--land-empty:#3a4a3a;--border-empty:#1a1a1a;
+}
+[data-theme="dark"][data-mapmode="satellite"]{
+  --ocean:#060e18;--land-empty:#0e1a10;--border-empty:#0a0a0a;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;width:100%;overflow:hidden;font-family:var(--fb);background:var(--ocean);color:var(--t1);-webkit-font-smoothing:antialiased;}
+/* ══ LOADER ═══════════════════════════════════════════════════ */
+#ldr{position:fixed;inset:0;z-index:9000;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .5s;}
+#ldr.hide{opacity:0;pointer-events:none;}
+.ldr-logo{font-family:var(--fd);font-size:22px;color:var(--ac);}
+.spin{width:34px;height:34px;border:2.5px solid var(--bd2);border-top-color:var(--ac);border-radius:50%;animation:sp .8s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+#ldr p{font-size:12.5px;color:var(--t3);}
+
+/* ══ TOPBAR ══════════════════════════════════════════════════ */
+#bar{position:fixed;top:0;left:0;right:0;height:var(--bar);z-index:900;background:var(--s1);border-bottom:1px solid var(--bd2);box-shadow:0 1px 8px var(--sh);display:flex;align-items:center;gap:10px;padding:0 16px;transition:background .3s;}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0;}
+.logo-gem{width:34px;height:34px;border-radius:9px;background:var(--ac);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:9px;color:#fff;letter-spacing:.5px;box-shadow:0 2px 8px rgba(26,115,232,.4);}
+.logo-words{display:flex;flex-direction:column;line-height:1.15;}
+.logo-name{font-family:var(--fd);font-size:15px;color:var(--t1);}
+.logo-tag{font-size:8.5px;font-weight:600;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;}
+
+/* search */
+#sw{position:relative;flex:1;min-width:0;max-width:280px;}
+@media(max-width:767px){
+  #sw{max-width:unset;display:none;}
+  #sw.sw-open{display:block;position:fixed;top:0;left:0;right:0;z-index:1200;padding:8px 12px;background:var(--s1);border-bottom:1px solid var(--bd2);box-shadow:0 4px 16px var(--sh);}
+}
+#gs{width:100%;padding:7px 32px 7px 34px;background:var(--s2);border:1px solid var(--bd);border-radius:24px;color:var(--t1);font-family:var(--fb);font-size:13px;outline:none;transition:all .2s;}
+#gs:focus{border-color:var(--ac);background:var(--s1);box-shadow:0 0 0 3px var(--acbg);border-radius:12px;}
+#gs::placeholder{color:var(--t3);}
+.si{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:13px;pointer-events:none;}
+#gx{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--t3);cursor:pointer;font-size:12px;display:none;width:18px;height:18px;border-radius:50%;background:var(--s3);align-items:center;justify-content:center;}
+#gx.on{display:flex;color:var(--t2);}
+#gsclose{display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--t2);cursor:pointer;font-size:13px;padding:4px;}
+@media(max-width:767px){
+  .si,.ib#gx,.ib#gsclose{top:calc(50% + 4px);}
+  #sw.sw-open #gsclose{display:flex;align-items:center;}
+  #sw.sw-open #gx{right:36px;}
+}
+#sd{position:absolute;top:calc(100% + 8px);left:0;right:0;background:var(--s1);border:1px solid var(--bd2);border-radius:12px;box-shadow:0 8px 40px var(--sh);max-height:320px;overflow-y:auto;z-index:3000;display:none;min-width:280px;}
+@media(max-width:767px){#sd{position:fixed;top:62px;left:12px;right:12px;z-index:1201;}}
+#sd.on{display:block;}
+#sd::-webkit-scrollbar{width:3px;}#sd::-webkit-scrollbar-thumb{background:var(--ac);border-radius:2px;}
+.sdh{padding:6px 14px;font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.12em;background:var(--s2);border-bottom:1px solid var(--bd);border-radius:12px 12px 0 0;}
+.sdr{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--bd);transition:background .1s;}
+.sdr:hover{background:var(--acbg);}
+.sdr:last-child{border-bottom:none;}
+.sdp{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;overflow:hidden;}
+.sdp img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.sdp.m{background:rgba(26,115,232,.12);color:var(--ac);}
+.sdp.f{background:rgba(217,48,37,.1);color:var(--red);}
+.sdn{font-size:13px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sdm{font-size:11px;color:var(--t2);display:flex;align-items:center;gap:4px;margin-top:1px;}
+.sdc-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sdnone{padding:16px;text-align:center;color:var(--t2);font-size:13px;}
+
+/* bar right */
+#br{display:flex;align-items:center;gap:7px;margin-left:auto;flex-shrink:0;}
+.sc{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:4px 10px;text-align:center;flex-shrink:0;min-width:44px;}
+.sv{font-family:var(--fd);font-size:14px;line-height:1;font-weight:700;}
+.sl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-top:2px;}
+.ib{width:34px;height:34px;border-radius:50%;border:1px solid var(--bd);background:var(--s2);color:var(--t2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;text-decoration:none;flex-shrink:0;}
+.ib:hover{border-color:var(--ac);color:var(--ac);background:var(--acbg);}
+.ib.act{border-color:var(--ac);color:var(--ac);background:var(--acbg2);}
+.fbg{position:absolute;top:-3px;right:-3px;background:var(--red);color:#fff;border-radius:6px;font-size:7px;font-weight:800;padding:1px 4px;display:none;pointer-events:none;}
+.fbg.on{display:block;}
+.ib-wrap{position:relative;}
+
+/* ══ FILTER ══════════════════════════════════════════════════ */
+#fp{position:fixed;top:var(--bar);left:0;right:0;z-index:800;background:var(--s1);border-bottom:1px solid var(--bd2);box-shadow:0 4px 20px var(--sh);max-height:0;overflow:hidden;transition:max-height .3s ease;}
+#fp.open{max-height:140px;}
+#fp-overlay{display:none;position:fixed;inset:0;z-index:799;}
+#fp-overlay.on{display:block;}
+.fpb{padding:12px 16px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+.fpg{display:flex;flex-direction:column;gap:4px;flex:1;min-width:110px;}
+.fpl{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);}
+.fps{padding:6px 26px 6px 10px;background:var(--s2);border:1px solid var(--bd);border-radius:8px;color:var(--t1);font-family:var(--fb);font-size:12px;outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235f6368' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;width:100%;}
+.fps:focus{border-color:var(--ac);}
+[data-theme="dark"] .fps option{background:var(--s2);}
+.fp-rst{padding:6px 12px;border-radius:8px;border:1px solid rgba(217,48,37,.3);background:rgba(217,48,37,.06);color:var(--red);font-family:var(--fb);font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;align-self:flex-end;flex-shrink:0;}
+.fp-rst:hover{background:rgba(217,48,37,.12);}
+
+/* ══ MAP WRAPPER — full width, no gaps ═══════════════════════ */
+#mw{
+  position:fixed;
+  top:var(--bar);left:0;bottom:0;right:0;
+  z-index:1;
+  transition:right var(--ease);
+  overflow:hidden;
+  margin:0;padding:0;
+}
+body.panel-open #mw{right:var(--panel-w);}
+#map{width:100%;height:100%;display:block;margin:0;padding:0;}
+.leaflet-container{width:100%!important;}
+
+/* Leaflet overrides */
+.leaflet-container{font-family:var(--fb)!important;}
+.leaflet-control-zoom{border:1px solid var(--bd2)!important;border-radius:8px!important;overflow:hidden!important;box-shadow:0 2px 12px var(--sh)!important;margin-right:10px!important;margin-bottom:10px!important;}
+.leaflet-control-zoom a{background:var(--s1)!important;color:var(--ac)!important;border-bottom:1px solid var(--bd)!important;font-weight:700!important;font-size:16px!important;line-height:28px!important;width:28px!important;height:28px!important;}
+.leaflet-control-zoom a:hover{background:var(--acbg)!important;}
+.leaflet-control-attribution{display:none!important;}
+
+
+/* tooltip */
+.mtt{background:var(--s1)!important;border:1px solid var(--bd2)!important;border-radius:10px!important;padding:10px 13px!important;font-family:var(--fb)!important;font-size:12px!important;box-shadow:0 8px 30px var(--sh)!important;pointer-events:none!important;color:var(--t1)!important;min-width:130px;}
+.mtt-name{font-family:var(--fd);font-size:14px;color:var(--t1);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.mtt-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.mtt-row{font-size:11px;color:var(--t2);margin-top:2px;display:flex;align-items:center;gap:5px;}
+.mtt-count{font-weight:700;color:var(--t1);}
+.mtt-m{color:#1a73e8;font-weight:600;}
+.mtt-f{color:#d93025;font-weight:600;}
+.mtt-none{font-size:10.5px;color:var(--t3);margin-top:2px;}
+
+/* ══ MAP OVERLAY CONTROLS ════════════════════════════════════ */
+
+/* Live chip */
+@keyframes chipIn{from{opacity:0;transform:translateX(-50%) translateY(-10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+#live-chip{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:400;background:var(--s1);border:1px solid var(--bd2);border-radius:50px;padding:6px 16px;box-shadow:0 2px 12px var(--sh);display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--t2);white-space:nowrap;animation:chipIn .5s cubic-bezier(.34,1.56,.64,1) both;pointer-events:none;}
+.chip-dot{width:8px;height:8px;border-radius:50%;background:#34a853;flex-shrink:0;animation:chipPulse 2s ease infinite;}
+@keyframes chipPulse{0%,100%{box-shadow:0 0 0 0 rgba(52,168,83,.4);}50%{box-shadow:0 0 0 5px rgba(52,168,83,0);}}
+.chip-num{font-family:var(--fd);font-size:14px;color:var(--t1);font-weight:700;}
+
+/* Map Mode toggle — bottom-right above zoom */
+#map-mode{
+  position:absolute;bottom:80px;right:10px;z-index:400;
+  display:flex;flex-direction:column;gap:3px;
+  background:var(--s1);border:1px solid var(--bd2);
+  border-radius:10px;padding:5px;
+  box-shadow:0 2px 12px var(--sh);
+}
+.mm-btn{
+  padding:5px 10px;border-radius:7px;font-size:10.5px;font-weight:600;
+  font-family:var(--fb);cursor:pointer;border:1px solid transparent;
+  color:var(--t2);background:transparent;transition:all .15s;
+  white-space:nowrap;
+}
+.mm-btn.act{background:var(--acbg2);border-color:var(--ac);color:var(--ac);}
+.mm-btn:hover:not(.act){background:var(--s2);}
+
+/* Scale legend — bottom-left */
+#scale-leg{
+  position:absolute;bottom:14px;left:14px;z-index:400;
+  background:var(--s1);border:1px solid var(--bd2);
+  border-radius:10px;padding:10px 12px;
+  box-shadow:0 2px 12px var(--sh);
+  min-width:130px;
+}
+#scale-leg h4{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--t3);margin-bottom:8px;}
+.sl-row{display:flex;align-items:center;gap:7px;margin-bottom:4px;}
+.sl-row:last-child{margin-bottom:0;}
+.sl-swatch{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+.sl-label{font-size:10.5px;color:var(--t2);}
+
+/* Ctrl+scroll hint */
+#mhint{position:absolute;bottom:14px;right:10px;z-index:400;background:var(--s1);border:1px solid var(--bd2);border-radius:20px;padding:6px 12px;font-size:10.5px;color:var(--t2);box-shadow:0 2px 12px var(--sh);display:flex;align-items:center;gap:5px;}
+
+/* Country labels */
+.country-label{background:none!important;border:none!important;box-shadow:none!important;overflow:visible!important;}
+.cli{font-family:var(--fb);font-size:10px;font-weight:600;color:#1a1a1a;white-space:nowrap;pointer-events:none;line-height:1;text-shadow:-1.5px -1.5px 0 rgba(255,255,255,.9),1.5px -1.5px 0 rgba(255,255,255,.9),-1.5px 1.5px 0 rgba(255,255,255,.9),1.5px 1.5px 0 rgba(255,255,255,.9);}
+[data-theme="dark"] .cli{color:#e8eaed;text-shadow:-1.5px -1.5px 0 rgba(0,0,0,.8),1.5px -1.5px 0 rgba(0,0,0,.8),-1.5px 1.5px 0 rgba(0,0,0,.8),1.5px 1.5px 0 rgba(0,0,0,.8);}
+
+/* City pins */
+.city-dot{width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35);cursor:pointer;}
+
+/* VIT pin */
+.vit-pin{width:42px;height:42px;border-radius:50% 50% 50% 0;border:2.5px solid #fff;box-shadow:0 3px 12px rgba(0,0,0,.4);overflow:hidden;transform:rotate(-45deg);}
+.vit-pin img{width:100%;height:100%;object-fit:cover;transform:rotate(45deg);}
+@keyframes pinDrop{from{transform:rotate(-45deg) translateY(-20px);opacity:0;}to{transform:rotate(-45deg);opacity:1;}}
+.vit-pin{animation:pinDrop .5s cubic-bezier(.34,1.56,.64,1) both;}
+
+/* ══ FLIGHT ANIMATION ═════════════════════════════════════════ */
+#flight-screen{position:fixed;inset:0;z-index:8000;display:none;flex-direction:column;background:#0d1117;overflow:hidden;}
+#flight-screen.active{display:flex;}
+@keyframes fsOut{to{opacity:0;}}
+#flight-screen.fade-out{animation:fsOut .8s ease forwards;}
+#fmap{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
+#farc{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;}
+
+/* Hero phase */
+#fhero{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:60px;background:linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,.3) 50%,rgba(0,0,0,.05) 100%);transition:opacity .8s ease;}
+#fhero.gone{opacity:0;pointer-events:none;}
+#fhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(1.1) brightness(.75);animation:heroZoom 3.5s ease forwards;}
+@keyframes heroZoom{from{transform:scale(1.1);}to{transform:scale(1);}}
+.fhero-badge{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;animation:heroFade 1s ease .4s both;}
+@keyframes heroFade{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
+.fhero-logo{width:54px;height:54px;border-radius:13px;background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;}
+.fhero-title{font-family:var(--fd);font-size:clamp(20px,5vw,34px);color:#fff;text-align:center;line-height:1.2;text-shadow:0 2px 12px rgba(0,0,0,.5);}
+.fhero-title em{color:#fbbc04;font-style:normal;}
+.fhero-sub{font-size:13px;color:rgba(255,255,255,.75);text-align:center;}
+.fhero-loc{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:5px 14px;font-size:12px;color:#fff;font-weight:600;}
+
+/* Flight bottom UI */
+#fui{position:absolute;bottom:0;left:0;right:0;z-index:20;background:linear-gradient(to top,rgba(0,0,0,.85),transparent);padding:24px 20px 32px;display:none;flex-direction:column;align-items:center;gap:10px;}
+#ftitle{font-family:var(--fd);font-size:clamp(16px,3.5vw,22px);color:#ffffff;text-align:center;}
+#ftitle em{color:#fbbc04;font-style:normal;}
+#fsub{font-size:12px;color:rgba(255,255,255,.6);text-align:center;}
+#fcount{font-size:13px;color:rgba(255,255,255,.8);font-weight:600;}
+#fprog{width:min(280px,80%);height:3px;background:rgba(255,255,255,.2);border-radius:2px;overflow:hidden;}
+#fprog-bar{height:100%;width:0%;background:linear-gradient(90deg,#fbbc04,#34a853);border-radius:2px;transition:width .15s linear;}
+#fskip{padding:8px 20px;border-radius:20px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.85);font-family:var(--fb);font-size:12px;font-weight:600;cursor:pointer;}
+#fskip:hover{background:rgba(255,255,255,.22);}
+
+/* VIT Vellore pulsing dot on flight map */
+.vit-pulse{width:18px;height:18px;border-radius:50%;background:rgba(251,188,4,.9);border:2.5px solid #fff;box-shadow:0 0 0 0 rgba(251,188,4,.6);animation:vitGlow 1.8s ease infinite;}
+@keyframes vitGlow{0%{box-shadow:0 0 0 0 rgba(251,188,4,.6);}70%{box-shadow:0 0 0 10px rgba(251,188,4,0);}100%{box-shadow:0 0 0 0 rgba(251,188,4,0);}}
+
+/* ══ DESKTOP PANEL ═══════════════════════════════════════════ */
+#panel{position:fixed;top:var(--bar);right:0;bottom:0;width:var(--panel-w);background:var(--s1);border-left:1px solid var(--bd2);display:flex;flex-direction:column;overflow:hidden;transform:translateX(100%);transition:transform var(--ease);z-index:600;box-shadow:-4px 0 24px var(--sh);}
+#panel.open{transform:translateX(0);}
+/* panel header */
+.pnh{padding:16px 16px 13px;flex-shrink:0;position:relative;overflow:hidden;}
+.pnh-bg{position:absolute;inset:0;background:linear-gradient(135deg,var(--ac) 0%,#7c3aed 100%);z-index:0;}
+.pnh-bg::after{content:'';position:absolute;bottom:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.06);}
+.pnh-content{position:relative;z-index:1;}
+.pnh-r1{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:11px;}
+.pnh-lft{display:flex;align-items:center;gap:10px;min-width:0;flex:1;}
+.pnh-flag{font-size:26px;line-height:1;flex-shrink:0;}
+.pnh-name{font-family:var(--fd);font-size:20px;color:#fff;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pnh-x{width:28px;height:28px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15);color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;margin-left:10px;}
+.pnh-x:hover{background:rgba(255,255,255,.28);}
+.pnh-kpis{display:flex;gap:8px;}
+.pkpi{flex:1;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);border-radius:10px;padding:6px 10px;text-align:center;}
+.pkv{font-family:var(--fd);font-size:18px;color:#fff;line-height:1;}
+.pkl{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.65);margin-top:2px;}
+.pnh-accent{height:3px;background:linear-gradient(90deg,#fbbc04,#4285f4);flex-shrink:0;}
+/* panel search */
+.pns{padding:10px 13px;border-bottom:1px solid var(--bd);flex-shrink:0;display:flex;flex-direction:column;gap:8px;}
+.pns-r{position:relative;}
+.pns-r input{width:100%;padding:7px 10px 7px 28px;background:var(--s2);border:1px solid var(--bd);border-radius:24px;color:var(--t1);font-family:var(--fb);font-size:12.5px;outline:none;transition:all .15s;}
+.pns-r input:focus{border-color:var(--ac);background:var(--s1);border-radius:8px;}
+.pns-r input::placeholder{color:var(--t3);}
+.pns-ri{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--t3);pointer-events:none;}
+.pgf{display:flex;gap:5px;}
+.pgc{flex:1;text-align:center;padding:5px 8px;border-radius:20px;border:1px solid var(--bd);background:var(--s2);color:var(--t2);font-size:11.5px;font-weight:600;cursor:pointer;transition:all .12s;font-family:var(--fb);}
+.pgc.on{background:var(--acbg2);border-color:var(--ac);color:var(--ac);}
+.pgc.mon{background:rgba(26,115,232,.1);border-color:var(--ac);color:var(--ac);}
+.pgc.fon{background:rgba(217,48,37,.08);border-color:var(--red);color:var(--red);}
+/* panel table — click row for modal */
+.pnt{flex:1;overflow-y:auto;overflow-x:hidden;width:100%;}
+.pnt::-webkit-scrollbar{width:3px;}
+.pnt::-webkit-scrollbar-thumb{background:var(--ac);border-radius:2px;}
+table.tb{width:100%;border-collapse:collapse;table-layout:fixed;}
+
+table.tb{width:100%;border-collapse:collapse;table-layout:fixed;}
+/* Fixed column widths — match inline styles in buildTbl */
+table.tb col.c0{width:26px;}
+table.tb col.c1{width:36px;}
+table.tb col.c2{width:auto;}
+table.tb col.c3{width:26px;}
+table.tb col.c4{width:44px;}
+table.tb col.c5{width:30px;}
+
+table.tb thead th{
+  position:sticky;top:0;z-index:5;
+  background:var(--s2);color:var(--t2);
+  font-size:9px;text-transform:uppercase;
+  letter-spacing:.1em;font-weight:700;
+  padding:7px 4px;text-align:left;
+  border-bottom:1px solid var(--bd2);
+  white-space:nowrap;overflow:hidden;
+}
+table.tb thead th:nth-child(1),
+table.tb thead th:nth-child(4),
+table.tb thead th:nth-child(5),
+table.tb thead th:nth-child(6){text-align:center;}
+
+table.tb td{
+  padding:8px 4px;
+  font-size:12px;
+  border-bottom:1px solid var(--bd);
+  vertical-align:middle;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+/* Name cell: allow wrap, use space generously */
+table.tb td:nth-child(3){
+  white-space:normal;
+  word-break:break-word;
+  padding-left:6px;
+  padding-right:4px;
+}
+table.tb tbody tr{cursor:pointer;transition:background .1s;}
+table.tb tbody tr:hover td{background:var(--acbg);}
+
+/* PHOTO */
+.tdph{
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8.5px;font-weight:700;
+  overflow:hidden;flex-shrink:0;
+}
+
+.tdph img{
+  width:100%;height:100%;
+  object-fit:cover;border-radius:50%;
+}
+
+/* GENDER */
+.tdm{background:rgba(26,115,232,.12);color:var(--ac);}
+.tdf{background:rgba(217,48,37,.1);color:var(--red);}
+
+.tda{
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;margin-left:auto; /* ✅ push right */
+}
+
+/* BATCH */
+.tdbt{
+  font-size:10px;font-weight:700;
+  padding:3px 8px;border-radius:10px;
+  background:var(--ambg);color:var(--am);
+  border:1px solid rgba(251,188,4,.25);
+  display:inline-block;
+  margin-left:auto; /* ✅ push right */
+}
+
+/* NAME */
+.tdnm{
+  font-weight:600;
+  color:var(--t1);
+
+  /* ✅ FULL TEXT */
+  white-space:normal;
+  word-break:break-word;
+}
+
+/* UNUSED BUT KEPT */
+.tdco{color:var(--t2);font-size:11px;}
+.nores{padding:28px;text-align:center;color:var(--t2);font-size:13px;}
+/* empty state */
+.pnemp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px;text-align:center;}
+.pnemp-ic{font-size:3.5rem;opacity:.1;animation:float 4s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.pnemp h3{font-family:var(--fd);font-size:18px;color:var(--t2);}
+.pnemp p{font-size:12.5px;color:var(--t3);line-height:1.8;}
+
+/* ══ ALUMNI DETAIL MODAL ══════════════════════════════════════ */
+#amodal-bg{
+  display:none;position:fixed;inset:0;z-index:2000;
+  background:rgba(0,0,0,.45);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+}
+#amodal-bg.on{display:flex;}
+#amodal{
+  background:var(--s1);border-radius:20px;
+  width:100%;max-width:420px;max-height:88vh;
+  overflow-y:auto;
+  box-shadow:0 24px 60px rgba(0,0,0,.3);
+  position:relative;
+  animation:modalIn .25s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(.92) translateY(20px);}to{opacity:1;transform:none;}}
+/* modal header — gradient same as panel */
+.am-head{
+  padding:20px 20px 16px;
+  background:linear-gradient(135deg,var(--ac) 0%,#7c3aed 100%);
+  border-radius:20px 20px 0 0;
+  position:relative;
+}
+.am-close{
+  position:absolute;top:14px;right:14px;
+  width:28px;height:28px;border-radius:50%;
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);
+  color:#fff;font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.am-close:hover{background:rgba(255,255,255,.3);}
+.am-photo{
+  width:70px;height:70px;border-radius:50%;
+  border:3px solid rgba(255,255,255,.5);
+  overflow:hidden;display:flex;align-items:center;justify-content:center;
+  font-size:24px;font-weight:700;color:#fff;
+  background:rgba(255,255,255,.18);
+  margin-bottom:12px;
+}
+.am-photo img{width:100%;height:100%;object-fit:cover;}
+.am-name{font-family:var(--fd);font-size:20px;color:#fff;line-height:1.2;margin-bottom:4px;}
+.am-role{font-size:12px;color:rgba(255,255,255,.75);}
+/* modal body */
+.am-body{padding:20px;}
+.am-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;}
+.am-row:last-child{margin-bottom:0;}
+.am-icon{width:36px;height:36px;border-radius:10px;background:var(--s2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.am-info{flex:1;min-width:0;}
+.am-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:2px;}
+.am-value{font-size:13px;font-weight:600;color:var(--t1);word-break:break-word;}
+.am-value.sub{font-size:11.5px;color:var(--t2);font-weight:500;}
+.am-divider{height:1px;background:var(--bd);margin:14px 0;}
+
+/* ══ MOBILE MODAL ════════════════════════════════════════════ */
+#mob{display:none;position:fixed;inset:0;z-index:1100;background:var(--s1);flex-direction:column;overflow:hidden;}
+#mob.on{display:flex;}
+.mob-bar{flex-shrink:0;background:linear-gradient(135deg,var(--ac) 0%,#7c3aed 100%);padding:0 14px;display:flex;align-items:center;gap:10px;position:relative;overflow:hidden;height:calc(52px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top);}
+.mob-flag{font-size:22px;flex-shrink:0;}
+.mob-cname{font-family:var(--fd);font-size:18px;color:#fff;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mob-x{width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.14);color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.mob-kpis{display:flex;flex-shrink:0;background:var(--s2);border-bottom:1px solid var(--bd2);}
+.mob-kpi{flex:1;padding:9px 4px;text-align:center;border-right:1px solid var(--bd);}
+.mob-kpi:last-child{border-right:none;}
+.mob-kv{font-family:var(--fd);font-size:20px;line-height:1;font-weight:700;}
+.mob-kl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-top:2px;}
+.mob-srch{padding:10px 13px;border-bottom:1px solid var(--bd);flex-shrink:0;display:flex;flex-direction:column;gap:8px;}
+.mob-tbl{flex:1;overflow-y:auto;overflow-x:hidden;}
+.mob-tbl::-webkit-scrollbar{width:3px;}
+.mob-tbl::-webkit-scrollbar-thumb{background:var(--ac);border-radius:2px;}
+#mob table.tb col.c0{width:26px;}#mob table.tb col.c1{width:36px;}#mob table.tb col.c2{width:auto;}
+#mob table.tb col.c3{width:26px;}#mob table.tb col.c4{width:44px;}#mob table.tb col.c5{width:30px;}
+
+/* ══ RESPONSIVE ═════════════════════════════════════════════ */
+@media(max-width:767px){
+  :root{--bar:50px;}
+  #panel{display:none!important;}
+  .sc{display:none;}
+  .logo-tag{display:none;}
+  .logo-name{font-size:13px;}
+  #mhint{display:none;}
+  #fp.open{max-height:260px;}
+  .fpb{flex-wrap:wrap;}
+  .fpg{min-width:calc(50% - 10px);}
+  #live-chip{display:none;}
+  #btn-srch{display:flex!important;}
+  #map-mode{bottom:70px;right:8px;}
+  .mm-btn{padding:7px 9px;font-size:17px;}
+  .mm-txt{display:none;}
+  #scale-leg{bottom:10px;left:10px;padding:8px 10px;}
+  /* View All: icon only on mobile */
+  #btn-viewall{font-size:10px;padding:5px 8px;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;}
+  #btn-viewall-txt{display:none;}
+  /* Make sure bar doesn't overflow */
+  #bar{padding:0 10px;gap:7px;}
+  #br{gap:5px;}
+}
+@media(min-width:768px){
+  #mob{display:none!important;}
+  #btn-srch{display:none!important;}
+}
+
+.leaflet-interactive {
+  pointer-events: auto !important;
+}
+</style>
+</head>
+<body>
+
+<!-- LOADER — z-index 9000, hides only after map fully renders -->
+<div id="ldr">
+  <div class="ldr-logo">VIT Stars Scheme</div>
+  <div class="spin"></div>
+  <p id="ldr-msg">Loading…</p>
+</div>
+
+<!-- FLIGHT ANIMATION SCREEN -->
+<div id="flight-screen">
+  <div id="fhero">
+    <img id="fhero-img"
+      src="https://raw.githubusercontent.com/vit-stars/data/main/photos/vit.jpg"
+      alt="VIT Campus Vellore"/>
+    <div class="fhero-badge">
+      <div class="fhero-logo">VIT</div>
+      <div class="fhero-title">VIT Stars Scheme<br><em>Global Alumni</em></div>
+      <div class="fhero-sub">Excellence taking flight — from Vellore to the World</div>
+      <div class="fhero-loc">📍 Vellore Institute of Technology · Tamil Nadu, India</div>
+    </div>
+  </div>
+  <div id="fmap"></div>
+  <svg id="farc" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div id="fui">
+    <div id="ftitle">✈ <em>Taking Flight</em> — VIT Alumni Abroad</div>
+    <div id="fsub">From Vellore to the World</div>
+    <div id="fcount"></div>
+    <div id="fprog"><div id="fprog-bar"></div></div>
+    <button id="fskip" onclick="skipFlight()">Skip →</button>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div id="bar">
+  <a class="logo" href="#">
+    <div class="logo-gem">VIT</div>
+    <div class="logo-words">
+      <span class="logo-name">VIT Stars Scheme</span>
+      <span class="logo-tag">Alumni Abroad</span>
+    </div>
+  </a>
+  <div id="sw">
+    <span class="si">🔍</span>
+    <input id="gs" type="text" placeholder="Search alumni, country, company…" oninput="onGS()" onkeydown="if(event.key==='Escape')clearGS()" autocomplete="off"/>
+    <button id="gx" onclick="clearGS()">✕</button>
+    <button id="gsclose" onclick="closeMobSearch()">✕</button>
+    <div id="sd"></div>
+  </div>
+  <div id="br">
+    <button onclick="openAllAlumni()" style="padding:6px 14px;border-radius:20px;background:linear-gradient(135deg,var(--ac),#7c3aed);color:#fff;border:none;font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--fb);box-shadow:0 2px 8px rgba(26,115,232,.3);white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:4px;" id="btn-viewall">🌍<span id="btn-viewall-txt"> View All</span></button>
+    <div class="sc"><div class="sv" id="st-t" style="color:var(--ac)">0</div><div class="sl">Total</div></div>
+    <div class="sc"><div class="sv" id="st-c" style="color:#34a853">0</div><div class="sl">Countries</div></div>
+    <div class="sc"><div class="sv" id="st-m" style="color:var(--ac)">0</div><div class="sl">Male</div></div>
+    <div class="sc"><div class="sv" id="st-f" style="color:var(--red)">0</div><div class="sl">Female</div></div>
+    <button class="ib" id="btn-srch" onclick="openMobSearch()" style="display:none;">🔍</button>
+    <div class="ib-wrap">
+      <button class="ib" id="btn-f" onclick="toggleFP()">⊞<span class="fbg" id="fbg">0</span></button>
+    </div>
+    <button class="ib" id="theme-btn" onclick="toggleTheme()">🌙</button>
+  </div>
+</div>
+
+<!-- FILTER -->
+<div id="fp">
+  <div class="fpb">
+    <div class="fpg"><label class="fpl">Batch</label>
+      <select id="sel-batch" class="fps" onchange="applyF()"><option value="all">All Batches</option></select></div>
+    <div class="fpg"><label class="fpl">Gender</label>
+      <select id="sel-gender" class="fps" onchange="applyF()">
+        <option value="all">All</option><option value="M">♂ Male</option><option value="F">♀ Female</option>
+      </select></div>
+    <div class="fpg"><label class="fpl">Company</label>
+      <select id="sel-co" class="fps" onchange="applyF()"><option value="all">All Companies</option></select></div>
+    <div class="fpg"><label class="fpl">Designation</label>
+      <select id="sel-des" class="fps" onchange="applyF()"><option value="all">All Roles</option></select></div>
+    <button class="fp-rst" onclick="resetAll()">✕ Reset</button>
+  </div>
+</div>
+<div id="fp-overlay" onclick="closeFP()"></div>
+
+<!-- MAP AREA -->
+<div id="mw">
+  <div id="map"></div>
+
+  <!-- Map mode toggle -->
+  <div id="map-mode">
+    <button class="mm-btn act" data-mode="normal" onclick="setMapMode('normal',this)">🗺 <span class="mm-txt">Normal</span></button>
+    <button class="mm-btn" data-mode="terrain" onclick="setMapMode('terrain',this)">🏔 <span class="mm-txt">Terrain</span></button>
+    <button class="mm-btn" data-mode="satellite" onclick="setMapMode('satellite',this)">🛰 <span class="mm-txt">Satellite</span></button>
+  </div>
+  <!-- Density scale legend -->
+  <div id="scale-leg">
+    <h4>Alumni Density</h4>
+    <div id="scale-items"></div>
+  </div>
+  <div id="mhint">💡 Ctrl + scroll · click country to explore</div>
+</div>
+
+<!-- Panel outside-click overlay -->
+<div id="panel-overlay" onclick="closePanel()" style="display:none;position:fixed;inset:0;z-index:499;background:rgba(0,0,0,.15);"></div>
+
+<!-- DESKTOP PANEL -->
+<div id="panel">
+  <div class="pnemp" id="pnemp">
+    <div class="pnemp-ic">🌍</div>
+    <h3>Explore the World</h3>
+    <p>Click any <strong style="color:var(--ac)">coloured country</strong><br>to view VIT alumni working there.</p>
+  </div>
+  <div id="pcon" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+    <div class="pnh">
+      <div class="pnh-bg"></div>
+      <div class="pnh-content">
+        <div class="pnh-r1">
+          <div class="pnh-lft">
+            <div class="pnh-flag" id="p-flag">🌐</div>
+            <div class="pnh-name" id="p-name">—</div>
+          </div>
+          <button class="pnh-x" onclick="closePanel()">✕</button>
+        </div>
+        <div class="pnh-kpis">
+          <div class="pkpi"><div class="pkv" id="p-tot">0</div><div class="pkl">Total</div></div>
+          <div class="pkpi"><div class="pkv" id="p-sho">0</div><div class="pkl">Shown</div></div>
+          <div class="pkpi"><div class="pkv" id="p-m" style="color:#bfdbfe">0</div><div class="pkl">Male</div></div>
+          <div class="pkpi"><div class="pkv" id="p-f" style="color:#fca5a5">0</div><div class="pkl">Female</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="pnh-accent"></div>
+    <div class="pns">
+      <div class="pns-r"><span class="pns-ri">🔍</span>
+        <input id="pin" type="text" placeholder="Search name, company, role…" oninput="renderP()"/></div>
+      <div class="pgf" id="pgf-d">
+        <button class="pgc on" onclick="setPGF(this,'all','d')">All</button>
+        <button class="pgc" onclick="setPGF(this,'M','d')">♂ Male</button>
+        <button class="pgc" onclick="setPGF(this,'F','d')">♀ Female</button>
+      </div>
+    </div>
+    <div class="pnt">
+      <table class="tb">
+        <col style="width:22px"/><col style="width:34px"/><col/>
+        <col style="width:22px"/><col style="width:42px"/><col style="width:28px"/>
+        <thead><tr><th>#</th><th></th><th>Name</th><th>G</th><th>Batch</th><th></th></tr></thead>
+        <tbody id="ptb"></tbody>
+      </table>
+      <div class="nores" id="pnr" style="display:none;">No alumni match.</div>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE FULL-SCREEN -->
+<div id="mob">
+  <div class="mob-bar">
+    <div class="mob-flag" id="m-flag">🌐</div>
+    <div class="mob-cname" id="m-name">—</div>
+    <button class="mob-x" onclick="closeM()">✕</button>
+  </div>
+  <div class="mob-kpis">
+    <div class="mob-kpi"><div class="mob-kv" id="m-tot" style="color:var(--ac)">0</div><div class="mob-kl">Total</div></div>
+    <div class="mob-kpi"><div class="mob-kv" id="m-sho" style="color:#34a853">0</div><div class="mob-kl">Shown</div></div>
+    <div class="mob-kpi"><div class="mob-kv" id="m-m" style="color:var(--ac)">0</div><div class="mob-kl">Male</div></div>
+    <div class="mob-kpi"><div class="mob-kv" id="m-f" style="color:var(--red)">0</div><div class="mob-kl">Female</div></div>
+  </div>
+  <div class="mob-srch">
+    <div class="pns-r"><span class="pns-ri">🔍</span>
+      <input id="min" type="text" placeholder="Search name, company…" oninput="renderM()"/></div>
+    <div class="pgf" id="pgf-m">
+      <button class="pgc on" onclick="setPGF(this,'all','m')">All</button>
+      <button class="pgc" onclick="setPGF(this,'M','m')">♂ Male</button>
+      <button class="pgc" onclick="setPGF(this,'F','m')">♀ Female</button>
+    </div>
+  </div>
+  <div class="mob-tbl">
+    <table class="tb">
+      <col style="width:22px"/><col style="width:34px"/><col/>
+      <col style="width:22px"/><col style="width:42px"/><col style="width:28px"/>
+      <thead><tr><th>#</th><th></th><th>Name</th><th>G</th><th>Batch</th><th></th></tr></thead>
+      <tbody id="mtb"></tbody>
+    </table>
+    <div class="nores" id="mnr" style="display:none;">No alumni match.</div>
+  </div>
+</div>
+
+<!-- ALUMNI DETAIL MODAL -->
+<div id="amodal-bg" onclick="if(event.target===this)closeAlumniModal()">
+  <div id="amodal">
+    <div class="am-head">
+      <button class="am-close" onclick="closeAlumniModal()">✕</button>
+      <div class="am-photo" id="am-photo"></div>
+      <div class="am-name" id="am-name">—</div>
+      <div class="am-role" id="am-role">—</div>
+    </div>
+    <div class="am-body" id="am-body"></div>
+  </div>
+</div>
+
+<script>
+/* ══ UTILS ════════════════════════════════════════════════════ */
+var FLAGS={"India":"🇮🇳","United States of America":"🇺🇸","UAE":"🇦🇪","Germany":"🇩🇪","Canada":"🇨🇦","Saudi Arabia":"🇸🇦","United Kingdom":"🇬🇧","Australia":"🇦🇺","Taiwan":"🇹🇼","Sweden":"🇸🇪","Netherlands":"🇳🇱","Singapore":"🇸🇬","Oman":"🇴🇲","Qatar":"🇶🇦","Italy":"🇮🇹","Japan":"🇯🇵","France":"🇫🇷","Malaysia":"🇲🇾","China":"🇨🇳","South Korea":"🇰🇷","New Zealand":"🇳🇿","Ireland":"🇮🇪","Switzerland":"🇨🇭","Denmark":"🇩🇰","Norway":"🇳🇴","Finland":"🇫🇮","Belgium":"🇧🇪","Austria":"🇦🇹","Spain":"🇪🇸","South Africa":"🇿🇦","Brazil":"🇧🇷","Mexico":"🇲🇽","Indonesia":"🇮🇩","Thailand":"🇹🇭","Philippines":"🇵🇭","Vietnam":"🇻🇳","Bahrain":"🇧🇭","Kuwait":"🇰🇼","Jordan":"🇯🇴","Egypt":"🇪🇬","Pakistan":"🇵🇰","Sri Lanka":"🇱🇰","Turkey":"🇹🇷","Poland":"🇵🇱","Greece":"🇬🇷","Portugal":"🇵🇹","Israel":"🇮🇱","Czech Republic":"🇨🇿","Romania":"🇷🇴","Hungary":"🇭🇺","Russia":"🇷🇺"};
+function gf(c){return FLAGS[c]||"🌐";}
+function nb(r){if(!r)return"?";var m=String(r).match(/^(\d{2})/);return m?"20"+m[1]:"?";}
+function ec(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function isDark(){return document.documentElement.getAttribute("data-theme")==="dark";}
+function mapMode(){return document.documentElement.getAttribute("data-mapmode")||"normal";}
+
+/* ══ 5-COLOR PALETTE for Normal mode (non-density) ══════════ */
+var PAL_NORMAL_LIGHT=["#1e8449","#c0392b","#1a5276","#7d6608","#6c3483"];
+var PAL_NORMAL_DARK =["#2ecc71","#e74c3c","#3498db","#f1c40f","#9b59b6"];
+var PAL_ARC=["#ff6b6b","#48dbfb","#ffd32a","#0be881","#f8a5c2"];
+var COUNTRY_PAL_IDX={}; /* assigned in initApp */
+
+function assignCountryColors(){
+  var seen={};
+  ALUMNI.forEach(function(a){if(a.country)seen[a.country]=1;});
+  var list=Object.keys(seen).sort();
+  list.forEach(function(cn,i){COUNTRY_PAL_IDX[cn]=i%5;});
+}
+
+function getCountryColor(cn){
+  /* Normal mode: fixed 5-color palette per country */
+  if(mapMode()==="normal"){
+    var idx=COUNTRY_PAL_IDX[cn];
+    if(idx===undefined)return null;
+    return isDark()?PAL_NORMAL_DARK[idx]:PAL_NORMAL_LIGHT[idx];
+  }
+  /* Terrain/Satellite: density-based */
+  return getDensityColor(countryTotal(cn));
+}
+
+function getArcColor(cn){
+  var idx=COUNTRY_PAL_IDX[cn];
+  if(idx===undefined)idx=0;
+  return PAL_ARC[idx%PAL_ARC.length];
+}
+
+/* ══ DENSITY-BASED COLOURS (used for Terrain/Satellite modes) ══
+   Light Normal: green scale (Google Maps style)
+   Light Terrain: brown/amber earthtone scale
+   Light Satellite: bright neon on dark
+   Dark: vivid green scale (as requested)
+*/
+var DENSITY_SCALES={
+  /* Light Normal: Google Maps green scale */
+  "normal-light" :["#a5d6a7","#66bb6a","#43a047","#2e7d32","#1b5e20"],
+  /* Dark Normal: bright neon green scale — clearly visible on dark land */
+  "normal-dark"  :["#69f0ae","#00e676","#00c853","#00a152","#007b3a"],
+  /* Light Terrain: warm amber/brown */
+  "terrain-light":["#ffe0b2","#ffb74d","#fb8c00","#e65100","#bf360c"],
+  /* Dark Terrain: vivid orange-amber on dark */
+  "terrain-dark" :["#ffcc80","#ffa726","#fb8c00","#ef6c00","#e65100"],
+  /* Light Satellite: bright teal/cyan */
+  "satellite-light":["#b2dfdb","#4db6ac","#009688","#00796b","#004d40"],
+  /* Dark Satellite: electric cyan on dark */
+  "satellite-dark" :["#84ffff","#18ffff","#00e5ff","#00b8d4","#0097a7"]
+};
+var DENSITY_LABELS=["1–2","3–5","6–10","11–20","21+"];
+var DENSITY_THRESHOLDS=[2,5,10,20,Infinity];
+
+function getDensityColor(count){
+  if(count===0)return null;
+  var mode=mapMode();
+  var theme=isDark()?"dark":"light";
+  var key=mode+"-"+theme;
+  var scale=DENSITY_SCALES[key]||DENSITY_SCALES["normal-light"];
+  for(var i=0;i<DENSITY_THRESHOLDS.length;i++){
+    if(count<=DENSITY_THRESHOLDS[i])return scale[i];
+  }
+  return scale[scale.length-1];
+}
+
+function buildScaleLegend(){
+  var mode=mapMode();var theme=isDark()?"dark":"light";
+  var key=mode+"-"+theme;
+  var scale=DENSITY_SCALES[key]||DENSITY_SCALES["normal-light"];
+  var empty=getComputedStyle(document.documentElement).getPropertyValue("--land-empty").trim()||"#f2efe9";
+  var html='<div class="sl-row"><div class="sl-swatch" style="background:'+empty+';border:1px solid var(--border-empty,#ccc)"></div><span class="sl-label">No alumni</span></div>';
+  DENSITY_LABELS.forEach(function(lbl,i){
+    html+='<div class="sl-row"><div class="sl-swatch" style="background:'+scale[i]+'"></div><span class="sl-label">'+lbl+'</span></div>';
+  });
+  document.getElementById("scale-items").innerHTML=html;
+}
+
+function setMapMode(mode,btn){
+  document.documentElement.setAttribute("data-mapmode",mode);
+  document.querySelectorAll(".mm-btn").forEach(function(b){b.classList.remove("act");});
+  btn.classList.add("act");
+  var theme=isDark()?"dark":"light";
+  var oceanCols={
+    "normal-light":"#aadaff","normal-dark":"#0e2a45",
+    "terrain-light":"#93c9e3","terrain-dark":"#0a1e2e",
+    "satellite-light":"#1a3550","satellite-dark":"#060e18"
+  };
+  if(oceanRect)oceanRect.setStyle({fillColor:oceanCols[mode+"-"+theme]||"#aadaff"});
+  if(gjL)gjL.setStyle(cStyle);
+  buildScaleLegend();
+  /* Scale legend only relevant for density modes */
+  document.getElementById("scale-leg").style.display=(mode==="normal")?"none":"block";
+}
+
+/* ══ COUNTRY CENTRES ══════════════════════════════════════════ */
+var CENT={
+  "United States of America":[38,-97],"Germany":[51,10],"Singapore":[1.35,103.82],
+  "UAE":[24.47,54.37],"Saudi Arabia":[24,45],"United Kingdom":[54,-2],
+  "Canada":[57,-96],"Australia":[-25,135],"Japan":[36.5,138],
+  "France":[46.5,2],"Netherlands":[52.3,5.3],"Sweden":[62,17],
+  "Switzerland":[47,8.3],"Qatar":[25.3,51.2],"Taiwan":[23.7,121],
+  "Oman":[22,57.5],"India":[22,79],"China":[35,105],
+  "South Korea":[37,127.5],"Brazil":[-10,-53],"Russia":[62,94],
+  "South Africa":[-29,25],"Norway":[65,14],"Denmark":[56,9.5],
+  "Finland":[64,26],"Belgium":[50.5,4.5],"Austria":[47.5,14.5],
+  "Spain":[40,-4],"New Zealand":[-41,174],"Ireland":[53.5,-8],
+  "Poland":[52,20],"Turkey":[39,35],"Greece":[39.5,22],
+  "Malaysia":[4,109],"Indonesia":[-2,118],"Thailand":[15,101],
+  "Philippines":[13,122],"Vietnam":[16,107],"Egypt":[27,30],
+  "Pakistan":[30,70],"Sri Lanka":[7.9,80.7],"Romania":[46,25],
+  "Hungary":[47,19],"Czech Republic":[50,15.5],"Israel":[31.5,34.8],
+  "Jordan":[31,36],"Kuwait":[29.3,47.7],"Bahrain":[26,50.5],"Portugal":[39.5,-8],
+  "Italy":[41.9,12.5]
+};
+
+/* Specific city coords for pin markers */
+var CITY_COORDS={
+  "California, USA":[36.7,-119.4],"Seattle, USA":[47.6,-122.3],
+  "Texas, USA":[31.9,-99.9],"New Jersey, USA":[40.1,-74.7],
+  "Washington, USA":[47.5,-120.5],"Dubai, UAE":[25.2,55.27],
+  "Abu Dhabi, UAE":[24.45,54.37],"Sharjah, UAE":[25.35,55.42],
+  "Hannover, Germany":[52.37,9.73],"Stuttgart, Germany":[48.78,9.18],
+  "Berlin, Germany":[52.52,13.4],"Riyadh, Saudi Arabia":[24.68,46.72],
+  "Dammam, Saudi Arabia":[26.43,50.1],"Singapore":[1.35,103.82],
+  "London, UK":[51.5,-0.12],"Sydney, Australia":[-33.8,151.2],
+  "Melbourne, Australia":[-37.8,144.96],"Taipei, Taiwan":[25.03,121.56],
+  "Stockholm, Sweden":[59.33,18.06],"Eindhoven, Netherlands":[51.44,5.47],
+  "Tokyo, Japan":[35.68,139.69],"Doha, Qatar":[25.28,51.53],
+  "Muscat, Oman":[23.58,58.4],"Zurich, Switzerland":[47.37,8.54],
+  "Toronto, Canada":[43.65,-79.38],"Vancouver, Canada":[49.25,-123.1],
+  "Rome, Italy":[41.9,12.5]
+};
+
+var VIT=[12.97,79.15];
+
+/* ══ DATA ════════════════════════════════════════════════════ */
+var ALUMNI=[];
+/* ── PASTE YOUR GITHUB CONFIG HERE ── */
+var CONFIG={
+  GH_USER:"YOUR_GITHUB_USERNAME",
+  GH_REPO:"vit-alumni-data",
+  GH_TOKEN:"YOUR_READ_ONLY_TOKEN_HERE"
+};
+function loadData(){
+  if(isDataLoaded)return;
+  isDataLoaded=true;
+
+  /* ── If no real token configured, use sample data immediately ── */
+
+  /* ── Fetch from your GitHub repo ── */
+  fetch(
+    "https://raw.githubusercontent.com/vit-stars/data/main/abroad_alumni.json"
+  )
+  .then(function(r){
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    return r.json();
+  })
+  .then(function(d){
+    var all=d;
+    ALUMNI=all
+      .filter(function(s){return s.country && s.country!=="";})
+      .map(function(s){return{
+        name:s.name||"",
+        gender:s.gender||"M",
+        district:s.district||"",
+        company:s.company||"",
+        designation:s.designation||"",
+        location:s.location||"",
+        country:s.country||"",
+        batch:s.batch||"",
+        photo:s.photo||""
+      };});
+    initApp();
+  })
+  .catch(function(err){
+    console.warn("GitHub fetch failed, using sample data:",err);
+    initApp();
+  });
+}
+function setLdr(msg){var el=document.getElementById("ldr-msg");if(el)el.textContent=msg;}
+
+function hideLdr(){
+  var l=document.getElementById("ldr");
+  if(!l||l.style.display==="none")return;
+  l.classList.add("hide");
+  setTimeout(function(){l.style.display="none";},600);
+}
+
+/* Safety net — force hide loader after 12s if something goes wrong */
+setTimeout(function(){hideLdr();},12000);
+
+function sample(){
+  return[
+    {name:"Arjun Krishnamurthy",gender:"M",district:"Vellore",company:"Google",designation:"Software Engineer",location:"California, USA",country:"United States",batch:"2008",photo:""},
+    {name:"Priya Sharma",gender:"F",district:"Chennai",company:"Microsoft",designation:"Product Manager",location:"Seattle, USA",country:"United States",batch:"2010",photo:""},
+    {name:"Ravi Subramanian",gender:"M",district:"Coimbatore",company:"Amazon",designation:"SDE II",location:"New Jersey, USA",country:"United States",batch:"2009",photo:""},
+    {name:"Anitha Rajan",gender:"F",district:"Salem",company:"Apple",designation:"UX Engineer",location:"California, USA",country:"United States",batch:"2012",photo:""},
+    {name:"Karthik Balaji",gender:"M",district:"Madurai",company:"Meta",designation:"Data Scientist",location:"Texas, USA",country:"United States",batch:"2011",photo:""},
+    {name:"Deepa Nair",gender:"F",district:"Trichy",company:"IBM",designation:"Cloud Architect",location:"Washington, USA",country:"United States",batch:"2013",photo:""},
+    {name:"Siva Prakash",gender:"M",district:"Vellore",company:"Siemens",designation:"Project Engineer",location:"Hannover, Germany",country:"Germany",batch:"2008",photo:""},
+    {name:"Ananya Krishnan",gender:"F",district:"Erode",company:"SAP",designation:"Business Analyst",location:"Berlin, Germany",country:"Germany",batch:"2014",photo:""},
+    {name:"Sathish Babu",gender:"M",district:"Tirunelveli",company:"Bosch",designation:"Embedded Engineer",location:"Stuttgart, Germany",country:"Germany",batch:"2010",photo:""},
+    {name:"Bharath Selvan",gender:"M",district:"Thanjavur",company:"Grab",designation:"Backend Engineer",location:"Singapore",country:"Singapore",batch:"2010",photo:""},
+    {name:"Hema Sundaram",gender:"F",district:"Vellore",company:"DBS Bank",designation:"Data Analyst",location:"Singapore",country:"Singapore",batch:"2012",photo:""},
+    {name:"Prakash Venkatesh",gender:"M",district:"Kancheepuram",company:"Accenture",designation:"Tech Lead",location:"Singapore",country:"Singapore",batch:"2009",photo:""},
+    {name:"Dinesh Raj",gender:"M",district:"Cuddalore",company:"ADNOC",designation:"Petroleum Engineer",location:"Abu Dhabi, UAE",country:"UAE",batch:"2008",photo:""},
+    {name:"Nivetha Kumar",gender:"F",district:"Nagapattinam",company:"Etisalat",designation:"Network Engineer",location:"Dubai, UAE",country:"UAE",batch:"2011",photo:""},
+    {name:"Sugumar T",gender:"M",district:"Vellore",company:"Emaar",designation:"IT Manager",location:"Dubai, UAE",country:"UAE",batch:"2013",photo:""},
+    {name:"Vasanth Kumar",gender:"M",district:"Tiruvannamalai",company:"Emaar",designation:"DevOps Engineer",location:"Sharjah, UAE",country:"UAE",batch:"2009",photo:""},
+    {name:"Ramesh Balaguru",gender:"M",district:"Dharmapuri",company:"Aramco",designation:"Control Engineer",location:"Riyadh, Saudi Arabia",country:"Saudi Arabia",batch:"2015",photo:""},
+    {name:"Jeeva K",gender:"M",district:"Krishnagiri",company:"SABIC",designation:"Process Engineer",location:"Riyadh, Saudi Arabia",country:"Saudi Arabia",batch:"2012",photo:""},
+    {name:"Ganesh Murthy",gender:"M",district:"Chennai",company:"Arup",designation:"Civil Engineer",location:"London, UK",country:"United Kingdom",batch:"2010",photo:""},
+    {name:"Sangeetha Raj",gender:"F",district:"Vellore",company:"Deloitte",designation:"Tech Consultant",location:"London, UK",country:"United Kingdom",batch:"2012",photo:""},
+    {name:"Bala Subramanian",gender:"M",district:"Tirupur",company:"Barclays",designation:"Data Engineer",location:"London, UK",country:"United Kingdom",batch:"2008",photo:""},
+    {name:"Rajesh Chandrasekaran",gender:"M",district:"Coimbatore",company:"Shopify",designation:"Engineering Manager",location:"Toronto, Canada",country:"Canada",batch:"2008",photo:""},
+    {name:"Meena Iyer",gender:"F",district:"Trichy",company:"RBC",designation:"Software Developer",location:"Vancouver, Canada",country:"Canada",batch:"2014",photo:""},
+    {name:"Vinoth Kumar",gender:"M",district:"Salem",company:"Manulife",designation:"Cloud Architect",location:"Toronto, Canada",country:"Canada",batch:"2011",photo:""},
+    {name:"Senthil Nathan",gender:"M",district:"Madurai",company:"Atlassian",designation:"Senior Engineer",location:"Sydney, Australia",country:"Australia",batch:"2011",photo:""},
+    {name:"Vijayalakshmi T",gender:"F",district:"Chennai",company:"CBA",designation:"Data Scientist",location:"Melbourne, Australia",country:"Australia",batch:"2010",photo:""},
+    {name:"Muthukumar V",gender:"M",district:"Vellore",company:"ASML",designation:"Software Engineer",location:"Eindhoven, Netherlands",country:"Netherlands",batch:"2009",photo:""},
+    {name:"Aarthi Dhanasekaran",gender:"F",district:"Erode",company:"Ericsson",designation:"RF Engineer",location:"Stockholm, Sweden",country:"Sweden",batch:"2013",photo:""},
+    {name:"Gokulakrishnan S",gender:"M",district:"Namakkal",company:"Toyota",designation:"Automotive Engineer",location:"Tokyo, Japan",country:"Japan",batch:"2010",photo:""},
+    {name:"Ramya Srinivasan",gender:"F",district:"Tirunelveli",company:"Sony",designation:"Hardware Engineer",location:"Tokyo, Japan",country:"Japan",batch:"2015",photo:""},
+    {name:"Pradeep Natarajan",gender:"M",district:"Vellore",company:"Qatar Rail",designation:"Project Manager",location:"Doha, Qatar",country:"Qatar",batch:"2012",photo:""},
+    {name:"Anbu Selvi",gender:"F",district:"Dharmapuri",company:"Ooredoo",designation:"Business Analyst",location:"Doha, Qatar",country:"Qatar",batch:"2014",photo:""},
+    {name:"Vasanth Rajan",gender:"M",district:"Chennai",company:"MediaTek",designation:"IC Designer",location:"Taipei, Taiwan",country:"Taiwan",batch:"2013",photo:""},
+    {name:"Pavithra M",gender:"F",district:"Vellore",company:"Muscat Municipality",designation:"IT Analyst",location:"Muscat, Oman",country:"Oman",batch:"2016",photo:""},
+    {name:"Selvaraj P",gender:"M",district:"Salem",company:"Zurich Insurance",designation:"Data Engineer",location:"Zurich, Switzerland",country:"Switzerland",batch:"2011",photo:""}
+  ];
+}
+
+/* ══ FILTER STATE ═════════════════════════════════════════════ */
+var pgf={d:"all",m:"all"},curC=null,fpO=false;
+var ALUMNI_COUNTRIES=[]; /* countries that actually have alumni — computed once */
+
+function getFiltered(){
+  var b=document.getElementById("sel-batch").value;
+  var g=document.getElementById("sel-gender").value;
+  var co=document.getElementById("sel-co").value;
+  var d=document.getElementById("sel-des").value;
+  return ALUMNI.filter(function(a){
+    return(b==="all"||a.batch===b)&&(g==="all"||a.gender===g)
+      &&(co==="all"||a.company===co)&&(d==="all"||a.designation===d);
+  });
+}
+function nAct(){
+  var n=0;["sel-batch","sel-gender","sel-co","sel-des"].forEach(function(id){if(document.getElementById(id).value!=="all")n++;});
+  return n;
+}
+function buildFilters(){
+  var bm={},com={},dm={};
+  ALUMNI.forEach(function(a){if(a.batch)bm[a.batch]=1;if(a.company)com[a.company]=1;if(a.designation)dm[a.designation]=1;});
+  var bs=document.getElementById("sel-batch");
+  Object.keys(bm).sort().forEach(function(b){var o=document.createElement("option");o.value=b;o.textContent=b;bs.appendChild(o);});
+  var cs=document.getElementById("sel-co");
+  Object.keys(com).sort().forEach(function(c){var o=document.createElement("option");o.value=c;o.textContent=c;cs.appendChild(o);});
+  var ds=document.getElementById("sel-des");
+  Object.keys(dm).sort().forEach(function(d){var o=document.createElement("option");o.value=d;o.textContent=d;ds.appendChild(o);});
+}
+function applyF(){
+  var a=getFiltered();updStats(a);refLayers();addCityPins();
+  var n=nAct();
+  var b=document.getElementById("fbg");b.textContent=n;b.className="fbg"+(n>0?" on":"");
+  document.getElementById("btn-f").classList.toggle("act",n>0);
+  if(curC){if(window.innerWidth>=768)renderP();else renderM();}
+}
+function resetAll(){
+  ["sel-batch","sel-gender","sel-co","sel-des"].forEach(function(id){document.getElementById(id).value="all";});
+  pgf={d:"all",m:"all"};
+  document.querySelectorAll(".pgc").forEach(function(c,i){c.className="pgc"+(i===0?" on":"");});
+  document.getElementById("gs").value="";clearGS();applyF();
+}
+function toggleFP(){fpO=!fpO;document.getElementById("fp").classList.toggle("open",fpO);document.getElementById("fp-overlay").classList.toggle("on",fpO);document.getElementById("btn-f").classList.toggle("act",fpO||nAct()>0);}
+function closeFP(){fpO=false;document.getElementById("fp").classList.remove("open");document.getElementById("fp-overlay").classList.remove("on");if(nAct()===0)document.getElementById("btn-f").classList.remove("act");}
+function updStats(arr){
+  var m=arr.filter(function(a){return a.gender==="M";}).length;
+  var f=arr.filter(function(a){return a.gender==="F";}).length;
+  var cc=new Set(arr.map(function(a){return a.country;}));
+  document.getElementById("st-t").textContent=arr.length;
+  document.getElementById("st-m").textContent=m;
+  document.getElementById("st-f").textContent=f;
+  document.getElementById("st-c").textContent=cc.size;
+  var cn=document.getElementById("chip-n"),cc2=document.getElementById("chip-c");
+  if(cn)cn.textContent=arr.length;if(cc2)cc2.textContent=cc.size;
+}
+
+/* ══ SEARCH ═════════════════════════════════════════════════ */
+function onGS(){
+  var q=document.getElementById("gs").value.trim();
+  document.getElementById("gx").className=q.length>0?"on":"";
+  var dr=document.getElementById("sd");
+  if(q.length<2){dr.className="";return;}
+  var ql=q.toLowerCase();
+  var hits=ALUMNI.filter(function(a){
+    return a.name.toLowerCase().indexOf(ql)>=0
+      ||a.country.toLowerCase().indexOf(ql)>=0
+      ||(a.company||"").toLowerCase().indexOf(ql)>=0
+      ||(a.designation||"").toLowerCase().indexOf(ql)>=0
+      ||(a.location||"").toLowerCase().indexOf(ql)>=0;
+  }).slice(0,12);
+  if(!hits.length){dr.innerHTML='<div class="sdnone">No results.</div>';dr.className="on";return;}
+  var html='<div class="sdh">'+hits.length+' result'+(hits.length>1?"s":"")+'</div>';
+  hits.forEach(function(a){
+    var cnt=ALUMNI.filter(function(x){return x.country===a.country;}).length;
+    var col=getDensityColor(cnt)||"#aaa";
+    var ini=a.name.split(" ").map(function(w){return w[0]||"";}).slice(0,2).join("");
+    var ph=a.photo?'<img src="'+ec(a.photo)+'" alt=""/>':'<span>'+ec(ini)+'</span>';
+    html+='<div class="sdr" onclick="srClick(\''+ec(a.country)+'\','+JSON.stringify(a).replace(/'/g,"&#39;")+')">'
+      +'<div class="sdp '+(a.gender==="M"?"m":"f")+'">'+ph+'</div>'
+      +'<div style="flex:1;min-width:0;"><div class="sdn">'+ec(a.name)+'</div>'
+      +'<div class="sdm"><span class="sdc-dot" style="background:'+col+'"></span>'
+      +gf(a.country)+' <b style="color:var(--t1)">'+ec(a.country)+'</b>'
+      +' · '+ec(a.location||"")+'</div></div>'
+      +'<span style="font-size:10px;color:var(--t3)">'+ec(a.designation||"")+'</span></div>';
+  });
+  dr.innerHTML=html;dr.className="on";
+}
+function srClick(cn,alumni){clearGS();closeMobSearch();openC(cn);}
+function clearGS(){document.getElementById("gs").value="";document.getElementById("gx").className="";document.getElementById("sd").className="";}
+function openMobSearch(){document.getElementById("sw").classList.add("sw-open");setTimeout(function(){document.getElementById("gs").focus();},80);}
+function closeMobSearch(){clearGS();document.getElementById("sw").classList.remove("sw-open");}
+document.addEventListener("click",function(e){if(!e.target.closest("#sw")&&!e.target.closest("#btn-srch"))document.getElementById("sd").className="";});
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"){clearGS();closeMobSearch();if(fpO)closeFP();closeAlumniModal();}
+});
+document.addEventListener("click",function(e){
+  if(window.innerWidth<768)return;
+  var panel=document.getElementById("panel");
+  if(panel.classList.contains("open")
+    &&!e.target.closest("#panel")
+    &&!e.target.closest("#map")
+    &&!e.target.closest("#sw")
+    &&!e.target.closest("#btn-viewall"))closePanel();
+});
+
+/* ══ VIEW ALL ALUMNI ══════════════════════════════════════════ */
+function openAllAlumni(){
+  curC="__ALL__";
+  refLayers();
+  if(window.innerWidth>=768){
+    /* Desktop — use the existing panel */
+    document.getElementById("p-flag").textContent="🌍";
+    document.getElementById("p-name").textContent="All Alumni";
+    document.getElementById("pnemp").style.display="none";
+    document.getElementById("pcon").style.display="flex";
+    document.getElementById("panel").classList.add("open");
+    document.getElementById("panel-overlay").style.display="block";
+    document.body.classList.add("panel-open");
+    document.getElementById("pin").value="";
+    pgf.d="all";
+    document.querySelectorAll("#pgf-d .pgc").forEach(function(c,i){c.className="pgc"+(i===0?" on":"");});
+    renderAllP();
+    setTimeout(function(){if(map)map.invalidateSize();},330);
+  } else {
+    /* Mobile */
+    document.getElementById("m-flag").textContent="🌍";
+    document.getElementById("m-name").textContent="All Alumni";
+    document.getElementById("min").value="";
+    pgf.m="all";
+    document.querySelectorAll("#pgf-m .pgc").forEach(function(c,i){c.className="pgc"+(i===0?" on":"");});
+    document.getElementById("mob").classList.add("on");
+    renderAllM();
+  }
+}
+
+function getAllRows(sid,px){
+  var q=(document.getElementById(sid).value||"").toLowerCase();
+  var rows=getFiltered();
+  if(pgf[px]==="M")rows=rows.filter(function(a){return a.gender==="M";});
+  else if(pgf[px]==="F")rows=rows.filter(function(a){return a.gender==="F";});
+  if(q)rows=rows.filter(function(a){
+    return a.name.toLowerCase().indexOf(q)>=0
+      ||(a.company||"").toLowerCase().indexOf(q)>=0
+      ||(a.designation||"").toLowerCase().indexOf(q)>=0
+      ||(a.location||"").toLowerCase().indexOf(q)>=0
+      ||(a.country||"").toLowerCase().indexOf(q)>=0;
+  });
+  return rows;
+}
+
+function buildAllTbl(rows,tbId,nrId,totId,shoId,mId,fId){
+  var m=getFiltered().filter(function(a){return a.gender==="M";}).length;
+  var f=getFiltered().filter(function(a){return a.gender==="F";}).length;
+  document.getElementById(totId).textContent=ALUMNI.length;
+  document.getElementById(shoId).textContent=rows.length;
+  document.getElementById(mId).textContent=m;
+  document.getElementById(fId).textContent=f;
+  var tb=document.getElementById(tbId),nr=document.getElementById(nrId);
+  if(!rows.length){tb.innerHTML="";nr.style.display="block";return;}
+  nr.style.display="none";
+  var html="";
+  rows.forEach(function(a,i){
+    var ini=a.name.split(" ").map(function(w){return w[0]||"";}).slice(0,2).join("");
+    var ph=a.photo
+      ?'<div class="tdph"><img src="'+ec(a.photo)+'" alt=""/></div>'
+      :'<div class="tdph '+(a.gender==="M"?"tdm":"tdf")+'">'+ec(ini)+'</div>';
+    var dataStr=JSON.stringify(a).replace(/'/g,"&#39;");
+    var seenMore='<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--acbg2);color:var(--ac);font-size:11px;font-weight:700;">›</span>';
+    var genderBadge='<div class="tda '+(a.gender==="M"?"tdm":"tdf")+'" style="margin:0 auto;width:22px;height:22px;">'+ec(a.gender)+'</div>';
+    var batchBadge='<span class="tdbt" style="font-size:9.5px;padding:2px 5px;">'+ec(a.batch)+'</span>';
+    /* Same layout for both mobile and desktop — name+country in name col */
+    html+='<tr onclick="openAlumniModal(this)" data-alumni=\''+dataStr+'\'>'
+      +'<td style="text-align:center;color:var(--t3);font-size:9px;font-weight:700;">'+(i+1)+'</td>'
+      +'<td>'+ph+'</td>'
+      +'<td>'
+        +'<div style="font-weight:600;color:var(--t1);font-size:12px;white-space:normal;word-break:break-word;line-height:1.3;">'+ec(a.name)+'</div>'
+        +'<div style="font-size:10px;color:var(--t3);margin-top:1px;">'+gf(a.country)+' '+ec(a.country)+'</div>'
+        +(a.company?'<div style="font-size:10px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+ec(a.company)+'</div>':'')
+      +'</td>'
+      +'<td style="text-align:center;">'+genderBadge+'</td>'
+      +'<td style="text-align:center;">'+batchBadge+'</td>'
+      +'<td style="text-align:center;">'+seenMore+'</td>'
+      +'</tr>';
+  });
+  tb.innerHTML=html;
+}
+
+function renderAllP(){
+  buildAllTbl(getAllRows("pin","d"),"ptb","pnr","p-tot","p-sho","p-m","p-f");
+}
+function renderAllM(){
+  buildAllTbl(getAllRows("min","m"),"mtb","mnr","m-tot","m-sho","m-m","m-f");
+}
+
+/* ══ OPEN / CLOSE ════════════════════════════════════════════ */
+function openC(cn){curC=cn;refLayers();if(window.innerWidth>=768)openPanel(cn);else openM(cn);}
+function openPanel(cn){
+  document.getElementById("p-flag").textContent=gf(cn);
+  document.getElementById("p-name").textContent=cn;
+  document.getElementById("pnemp").style.display="none";
+  document.getElementById("pcon").style.display="flex";
+  document.getElementById("panel").classList.add("open");
+  document.getElementById("panel-overlay").style.display="block";
+  document.body.classList.add("panel-open");
+  document.getElementById("pin").value="";pgf.d="all";
+  document.querySelectorAll("#pgf-d .pgc").forEach(function(c,i){c.className="pgc"+(i===0?" on":"");});
+  renderP();
+  setTimeout(function(){if(map)map.invalidateSize();},330);
+}
+function closePanel(){
+  document.getElementById("panel").classList.remove("open");
+  document.getElementById("panel-overlay").style.display="none";
+  document.body.classList.remove("panel-open");curC=null;
+  document.getElementById("pcon").style.display="none";
+  document.getElementById("pnemp").style.display="flex";
+  refLayers();
+  setTimeout(function(){if(map)map.invalidateSize();},330);
+}
+function openM(cn){
+  document.getElementById("m-flag").textContent=gf(cn);
+  document.getElementById("m-name").textContent=cn;
+  document.getElementById("min").value="";pgf.m="all";
+  document.querySelectorAll("#pgf-m .pgc").forEach(function(c,i){c.className="pgc"+(i===0?" on":"");});
+  document.getElementById("mob").classList.add("on");renderM();
+}
+function closeM(){document.getElementById("mob").classList.remove("on");curC=null;refLayers();}
+function setPGF(btn,val,px){
+  pgf[px]=val;
+  document.querySelectorAll("#pgf-"+px+" .pgc").forEach(function(c){c.className="pgc";});
+  btn.className="pgc"+(val==="M"?" mon":val==="F"?" fon":" on");
+  if(px==="d")renderP();else renderM();
+}
+
+/* ══ TABLE RENDERING ══════════════════════════════════════════ */
+function getRows(cn,sid,px){
+  var q=(document.getElementById(sid).value||"").toLowerCase();
+  var rows=getFiltered().filter(function(a){return a.country===cn;});
+  if(pgf[px]==="M")rows=rows.filter(function(a){return a.gender==="M";});
+  else if(pgf[px]==="F")rows=rows.filter(function(a){return a.gender==="F";});
+  if(q)rows=rows.filter(function(a){
+    return a.name.toLowerCase().indexOf(q)>=0
+      ||(a.company||"").toLowerCase().indexOf(q)>=0
+      ||(a.designation||"").toLowerCase().indexOf(q)>=0
+      ||(a.location||"").toLowerCase().indexOf(q)>=0;
+  });
+  return rows;
+}
+function phHTML(a){
+  var ini=a.name.split(" ").map(function(w){return w[0]||"";}).slice(0,2).join("");
+  if(a.photo)return'<div class="tdph"><img src="'+ec(a.photo)+'" alt=""/></div>';
+  return'<div class="tdph '+(a.gender==="M"?"tdm":"tdf")+'">'+ec(ini)+'</div>';
+}
+function buildTbl(rows,tbId,nrId,totId,shoId,mId,fId,cn){
+  var all=ALUMNI.filter(function(a){return a.country===cn;});
+  var m=all.filter(function(a){return a.gender==="M";}).length;
+  var f=all.filter(function(a){return a.gender==="F";}).length;
+  document.getElementById(totId).textContent=all.length;
+  document.getElementById(shoId).textContent=rows.length;
+  document.getElementById(mId).textContent=m;
+  document.getElementById(fId).textContent=f;
+  var tb=document.getElementById(tbId),nr=document.getElementById(nrId);
+  if(!rows.length){tb.innerHTML="";nr.style.display="block";return;}
+  nr.style.display="none";
+  var html="";
+  rows.forEach(function(a,i){
+    var dataAttr="data-idx='"+i+"' data-cn='"+ec(cn)+"'";
+    var ini=a.name.split(" ").map(function(w){return w[0]||"";}).slice(0,2).join("");
+    var ph=a.photo?'<div class="tdph"><img src="'+ec(a.photo)+'" alt=""/></div>'
+      :'<div class="tdph '+(a.gender==="M"?"tdm":"tdf")+'">'+ec(ini)+'</div>';
+    html+='<tr onclick="openAlumniModal(this)" '+dataAttr+' data-alumni=\''+JSON.stringify(a).replace(/'/g,"&#39;")+'\'>'
+      +'<td style="text-align:center;color:var(--t3);font-size:9px;font-weight:700;">'+( i+1)+'</td>'
+      +'<td>'+ph+'</td>'
+      +'<td>'
+        +'<div style="font-weight:600;color:var(--t1);font-size:12px;white-space:normal;word-break:break-word;line-height:1.3;">'+ec(a.name)+'</div>'
+        +(a.company?'<div style="font-size:10px;color:var(--t2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+ec(a.company)+'</div>':'')
+      +'</td>'
+      +'<td style="text-align:center;"><div class="tda '+(a.gender==="M"?"tdm":"tdf")+'" style="margin:0 auto;width:22px;height:22px;">'+ec(a.gender)+'</div></td>'
+      +'<td style="text-align:center;"><span class="tdbt" style="font-size:9.5px;padding:2px 5px;">'+ec(a.batch)+'</span></td>'
+      +'<td style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--acbg2);color:var(--ac);font-size:11px;font-weight:700;">›</span></td>'
+      +'</tr>';
+  });
+  tb.innerHTML=html;
+}
+function renderP(){
+  if(!curC)return;
+  if(curC==="__ALL__"){renderAllP();return;}
+  buildTbl(getRows(curC,"pin","d"),"ptb","pnr","p-tot","p-sho","p-m","p-f",curC);
+}
+function renderM(){
+  if(!curC)return;
+  if(curC==="__ALL__"){renderAllM();return;}
+  buildTbl(getRows(curC,"min","m"),"mtb","mnr","m-tot","m-sho","m-m","m-f",curC);
+}
+
+/* ══ ALUMNI DETAIL MODAL ══════════════════════════════════════ */
+function openAlumniModal(row){
+  var raw=row.getAttribute("data-alumni");
+  if(!raw)return;
+  var a;
+  try{a=JSON.parse(raw);}catch(e){return;}
+  /* Photo */
+  var ini=a.name.split(" ").map(function(w){return w[0]||"";}).slice(0,2).join("");
+  var photoEl=document.getElementById("am-photo");
+  photoEl.innerHTML=a.photo?'<img src="'+ec(a.photo)+'" alt="'+ec(a.name)+'"/>':'<span>'+ec(ini)+'</span>';
+  document.getElementById("am-name").textContent=a.name;
+  document.getElementById("am-role").textContent=(a.designation||"")+(a.company?" at "+a.company:"");
+  /* Body */
+  var rows=[
+    {icon:"🏢",label:"Company",value:a.company||"—",sub:a.designation||""},
+    {icon:"📍",label:"Location",value:a.location||"—",sub:gf(a.country)+" "+a.country},
+    {icon:"🎓",label:"Batch Year",value:a.batch||"—",sub:""},
+    {icon:"👤",label:"Gender",value:a.gender==="M"?"Male":"Female",sub:""},
+    {icon:"🏡",label:"District",value:a.district||"—",sub:"Tamil Nadu, India"}
+  ];
+  var html="";
+  rows.forEach(function(r,i){
+    if(i>0)html+='<div class="am-divider"></div>';
+    html+='<div class="am-row">'
+      +'<div class="am-icon">'+r.icon+'</div>'
+      +'<div class="am-info">'
+      +'<div class="am-label">'+r.label+'</div>'
+      +'<div class="am-value">'+ec(r.value)+'</div>'
+      +(r.sub?'<div class="am-value sub">'+ec(r.sub)+'</div>':'')
+      +'</div></div>';
+  });
+  document.getElementById("am-body").innerHTML=html;
+  document.getElementById("amodal-bg").classList.add("on");
+}
+function closeAlumniModal(){
+  document.getElementById("amodal-bg").classList.remove("on");
+}
+
+/* ══ THEME ═══════════════════════════════════════════════════ */
+var dark=false;
+function toggleTheme(){
+  dark=!dark;
+  document.documentElement.setAttribute("data-theme",dark?"dark":"light");
+  document.getElementById("theme-btn").textContent=dark?"☀️":"🌙";
+  /* update ocean */
+  var mode=mapMode();
+  var oceanCols={"normal-light":"#aadaff","normal-dark":"#0e2a45","terrain-light":"#93c9e3","terrain-dark":"#0a1e2e","satellite-light":"#1a3550","satellite-dark":"#060e18"};
+  var theme=isDark()?"dark":"light";
+  if(oceanRect)oceanRect.setStyle({fillColor:oceanCols[mode+"-"+theme]||"#aadaff"});
+  if(gjL)gjL.setStyle(cStyle);
+  buildScaleLegend();
+  if(map)setTimeout(addLabels,50);
+}
+
+/* ══ MAIN MAP ════════════════════════════════════════════════ */
+var map=null,gjL=null,oceanRect=null,labelsLayer=null,cityLayer=null;
+/* Cache GeoJSON so we only fetch ONCE — reused by flight animation */
+var GEO_CACHE=null;
+
+function countryTotal(cn){
+  return ALUMNI.filter(function(a){return a.country===cn;}).length;
+}
+function countryFiltered(cn){
+  return getFiltered().filter(function(a){return a.country===cn;}).length;
+}
+
+function cStyle(f){
+  var cn=f.properties.ADMIN||f.properties.name||f.properties.NAME||"";
+  var tot=countryTotal(cn);
+  /* Only alumni countries get colour */
+  if(tot===0){
+    return{
+      fillColor:"var(--land-empty)",  /* CSS var resolved at paint time */
+      fillColor:getComputedStyle(document.documentElement).getPropertyValue("--land-empty").trim()||"#f2efe9",
+      fillOpacity:0.85,
+      color:getComputedStyle(document.documentElement).getPropertyValue("--border-empty").trim()||"#c8c8c8",
+      weight:0.5,opacity:1
+    };
+  }
+  /* Alumni country — use filtered count if filter active, else total */
+  var cnt=nAct()>0?countryFiltered(cn):tot;
+  var col=getCountryColor(cn);
+  /* if filter active but this country has 0 filtered → dim */
+  if(nAct()>0&&cnt===0){
+    return{fillColor:isDark()?"#2a2d30":"#e8e8e8",fillOpacity:0.35,
+      color:isDark()?"#3a3d42":"#b0a898",weight:0.5,opacity:1};
+  }
+  /* In density modes, use count-based color */
+  if(mapMode()!=="normal"){col=getDensityColor(cnt)||col;}
+  return{
+    fillColor:col||"#43a047",fillOpacity:0.88,
+    color:"rgba(255,255,255,.5)",
+    weight:1.5,opacity:1
+  };
+}
+
+
+function onEach(f,layer){
+  var cn=f.properties.ADMIN||f.properties.name||f.properties.NAME||"";
+  var tot=countryTotal(cn);
+  var col=getCountryColor(cn)||getDensityColor(tot);
+
+  function buildTip(){
+    var m=ALUMNI.filter(function(a){return a.country===cn&&a.gender==="M";}).length;
+    var fc=ALUMNI.filter(function(a){return a.country===cn&&a.gender==="F";}).length;
+    var tip='<div class="mtt-name">'
+      +(col?'<div class="mtt-dot" style="background:'+col+'"></div>':'')
+      +gf(cn)+' <strong>'+ec(cn)+'</strong></div>';
+    if(tot>0){
+      if(nAct()>0){
+        var fil=countryFiltered(cn);
+        var fm=getFiltered().filter(function(a){return a.country===cn&&a.gender==="M";}).length;
+        var ff=getFiltered().filter(function(a){return a.country===cn&&a.gender==="F";}).length;
+        tip+='<div class="mtt-row"><span class="mtt-count">'+fil+'</span> shown'
+          +' · <span class="mtt-m">♂'+fm+'</span> <span class="mtt-f">♀'+ff+'</span></div>';
+        tip+='<div class="mtt-row" style="margin-top:3px;color:var(--t3);">'+tot+' total</div>';
+      } else {
+        tip+='<div class="mtt-row"><span class="mtt-count">'+tot+'</span> alumni'
+          +' · <span class="mtt-m">♂'+m+'</span> <span class="mtt-f">♀'+fc+'</span></div>';
+        tip+='<div class="mtt-row" style="margin-top:2px;font-size:10px;color:var(--t3);">Click to explore →</div>';
+      }
+    } else {
+      tip+='<div class="mtt-none">No VIT alumni recorded</div>';
+    }
+    return tip;
+  }
+
+  /* Bind initial tooltip so it works immediately */
+  layer.bindTooltip(buildTip(),{sticky:true,opacity:1,className:"mtt"});
+
+  layer.on({
+    mouseover:function(e){
+      /* Rebuild with latest filter state */
+      layer.unbindTooltip();
+      layer.bindTooltip(buildTip(),{sticky:true,opacity:1,className:"mtt"});
+      layer.openTooltip(e.latlng);
+      var cur=cStyle(f);
+      layer.setStyle({weight:2.5,color:"rgba(255,255,255,.9)",fillOpacity:Math.min((cur.fillOpacity||0.85)+0.1,1)});
+      layer.bringToFront();
+    },
+    mouseout:function(){
+      layer.closeTooltip();
+      if(gjL)gjL.resetStyle(layer);
+    },
+    click:function(){
+      if(tot>0)openC(cn);
+      else if(window.innerWidth>=768&&document.getElementById("panel").classList.contains("open"))closePanel();
+    }
+  });
+}
+
+function refLayers(){
+  if(!gjL)return;
+  gjL.setStyle(cStyle);
+  if(curC){
+    gjL.eachLayer(function(l){
+      var cn=l.feature.properties.ADMIN||l.feature.properties.name||l.feature.properties.NAME||"";
+      if(cn===curC)l.setStyle({weight:3,color:"#fff",fillOpacity:1});
+    });
+  }
+}
+
+/* Country name labels */
+function addLabels(){
+  if(labelsLayer){try{map.removeLayer(labelsLayer);}catch(e){}labelsLayer=null;}
+  labelsLayer=L.layerGroup();
+  /* Only label countries that have alumni */
+  ALUMNI_COUNTRIES.forEach(function(cn){
+    var center=CENT[cn];if(!center)return;
+    var lbl=L.marker([center[0],center[1]],{
+      icon:L.divIcon({className:"country-label",html:'<div class="cli">'+ec(cn)+'</div>',iconSize:null,iconAnchor:null}),
+      interactive:false,zIndexOffset:-100
+    });
+    labelsLayer.addLayer(lbl);
+  });
+  labelsLayer.addTo(map);
+  function chkZ(){var z=map.getZoom();if(z>=1.8)map.addLayer(labelsLayer);else map.removeLayer(labelsLayer);}
+  map.off("zoomend",chkZ).on("zoomend",chkZ);
+  chkZ();
+}
+
+/* City-level dot pins — specific locations from data */
+function addCityPins(){
+  if(cityLayer){try{map.removeLayer(cityLayer);}catch(e){}cityLayer=null;}
+  cityLayer=L.layerGroup();
+  var filtered=getFiltered();
+  /* Group by location */
+  var locMap={};
+  filtered.forEach(function(a){
+    var key=a.location;
+    if(!key)return;
+    if(!locMap[key])locMap[key]={alumni:[],country:a.country};
+    locMap[key].alumni.push(a);
+  });
+  Object.keys(locMap).forEach(function(loc){
+    var coords=CITY_COORDS[loc];
+    if(!coords)return; /* skip if no known coords */
+    var group=locMap[loc];
+    var tot=group.alumni.length;
+    var col=getDensityColor(countryTotal(group.country))||"#4285f4";
+    var marker=L.circleMarker([coords[0],coords[1]],{
+      radius:4+Math.min(tot,6),
+      fillColor:col,fillOpacity:0.9,
+      color:"#fff",weight:1.5,
+      interactive:true
+    });
+    var names=group.alumni.slice(0,3).map(function(a){return a.name;}).join(", ");
+    if(group.alumni.length>3)names+=" +"+( group.alumni.length-3)+" more";
+    marker.bindTooltip(
+      '<div class="mtt-name">📍 '+ec(loc)+'</div>'
+      +'<div class="mtt-row"><span class="mtt-count">'+tot+'</span> alumni here<br><span style="color:var(--t2);font-size:10px">'+ec(names)+'</span></div>',
+      {sticky:true,opacity:1,className:"mtt"}
+    );
+    marker.on("click",function(){openC(group.country);});
+    cityLayer.addLayer(marker);
+  });
+  cityLayer.addTo(map);
+  /* Show city pins only when zoomed in */
+  function chkZ(){var z=map.getZoom();if(z>=3)map.addLayer(cityLayer);else map.removeLayer(cityLayer);}
+  map.off("zoomend",chkZ).on("zoomend",chkZ);
+  chkZ();
+}
+
+/* ══ SMALL COUNTRY DOTS ══════════════════════════════════════ */
+var SMALL_COUNTRIES=["Singapore","Malaysia","Qatar","Bahrain","Taiwan",
+  "Netherlands","Belgium","Switzerland","Oman","UAE","Israel","Jordan","Kuwait"];
+
+function addSmallCountryDots(){
+  if(!map)return;
+  SMALL_COUNTRIES.forEach(function(cn){
+    var center=CENT[cn];
+    if(!center)return;
+    var tot=countryTotal(cn);
+    if(tot===0)return;
+    var col=getCountryColor(cn)||"#1a73e8";
+    L.marker([center[0],center[1]],{
+      icon:L.divIcon({
+        className:"",
+        html:'<div style="width:16px;height:16px;border-radius:50%;background:'+col+';border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer;transition:transform .15s;" title="'+cn+'"></div>',
+        iconAnchor:[8,8]
+      }),
+      interactive:true,zIndexOffset:600
+    })
+    .addTo(map)
+    .on("click",function(){openC(cn);})
+    .on("mouseover",function(e){e.target._icon.firstChild.style.transform="scale(1.4)";})
+    .on("mouseout",function(e){e.target._icon.firstChild.style.transform="scale(1)";})
+    .bindTooltip(
+      '<div class="mtt-name">'+gf(cn)+' '+ec(cn)+'</div>'
+      +'<div class="mtt-row"><span class="mtt-count">'+tot+'</span> alumni · tap to explore</div>',
+      {className:"mtt",sticky:false,direction:"top"}
+    );
+  });
+}
+
+/* VIT campus pin — uses your photo from GitHub */
+function addVITPin(){
+  /* Photo URL from your GitHub repo */
+  var photoUrl="https://raw.githubusercontent.com/vit-stars/data/main/photos/vit.jpg";
+  var pinHtml='<div style="'
+    +'width:46px;height:46px;'
+    +'border-radius:50% 50% 50% 0;'
+    +'border:3px solid #fff;'
+    +'box-shadow:0 3px 14px rgba(26,115,232,.6);'
+    +'overflow:hidden;'
+    +'transform:rotate(-45deg);'
+    +'animation:pinDrop .5s cubic-bezier(.34,1.56,.64,1) both;'
+    +'">'
+    +'<img src="'+photoUrl+'" '
+    +'style="width:100%;height:100%;object-fit:cover;transform:rotate(45deg);display:block;" '
+    +'onerror="this.parentNode.style.background=\'linear-gradient(135deg,#1a73e8,#7c3aed)\';this.parentNode.innerHTML=\'<span style=\\"transform:rotate(45deg);display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#fff;font-weight:800;font-size:11px;\\">VIT</span>\';"/>'
+    +'</div>';
+  L.marker(VIT,{
+    icon:L.divIcon({className:"",html:pinHtml,iconAnchor:[23,46]}),
+    interactive:true,zIndexOffset:1000
+  }).addTo(map)
+  .bindTooltip(
+    '<div class="mtt-name">📍 VIT Vellore, Tamil Nadu</div>'
+    +'<div class="mtt-row" style="color:var(--t2)">Origin · '+ALUMNI.length+' alumni working abroad</div>',
+    {className:"mtt",sticky:false,direction:"right"}
+  );
+}
+
+/* ══ ANTIMERIDIAN FIX ════════════════════════════════════════
+   Removes the ugly line across the map above USA/Russia.
+   Leaflet draws a straight line when polygon coordinates cross
+   the ±180° boundary. We fix this by shifting coordinates so
+   no single ring has a jump > 180° between consecutive points.
+*/
+function fixAntimeridian(geojson){
+  function fixRing(ring){
+    for(var i=1;i<ring.length;i++){
+      var prev=ring[i-1][0];
+      var curr=ring[i][0];
+      var diff=curr-prev;
+      if(diff>180) ring[i][0]-=360;
+      else if(diff<-180) ring[i][0]+=360;
+    }
+    return ring;
+  }
+  function fixCoords(coords,type){
+    if(type==="Polygon"){
+      return coords.map(fixRing);
+    } else if(type==="MultiPolygon"){
+      return coords.map(function(poly){return poly.map(fixRing);});
+    }
+    return coords;
+  }
+  geojson.features=geojson.features.map(function(f){
+    if(!f.geometry)return f;
+    f.geometry.coordinates=fixCoords(f.geometry.coordinates,f.geometry.type);
+    return f;
+  });
+  return geojson;
+}
+
+function initMap(){
+  map=L.map("map",{
+    center:[10,10],zoom:2.4,minZoom:1.5,maxZoom:10,
+    scrollWheelZoom:false,touchZoom:true,doubleClickZoom:true,tap:true,
+    zoomControl:true,attributionControl:false,
+    zoomSnap:0.25,zoomDelta:0.25,
+    maxBounds:[[-85,-210],[85,210]],maxBoundsViscosity:0.9
+  });
+  map.zoomControl.setPosition("topright");
+  /* Ctrl+scroll zoom */
+  document.getElementById("map").addEventListener("wheel",function(e){
+    if(e.ctrlKey||e.metaKey){
+      e.preventDefault();
+      map.setZoom(map.getZoom()+(e.deltaY<0?0.3:-0.3),{animate:true});
+    }
+  },{passive:false});
+
+  /* Ocean base layer */
+  oceanRect=L.rectangle([[-90,-180],[90,180]],{
+    color:"none",fillColor:"#aadaff",fillOpacity:1,interactive:false
+  }).addTo(map);
+
+  setLdr("Loading world map…");
+  /* Try jsdelivr first (reliable CDN, no CORS), then raw.githubusercontent as fallback */
+  fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
+  .then(function(r){if(!r.ok)throw 0;return r.json();})
+  .then(function(w){
+    /* world-atlas uses topojson — load the client library */
+    if(typeof topojson!=="undefined"){
+      buildFromTopo(w);
+    } else {
+      var sc=document.createElement("script");
+      sc.src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js";
+      sc.onload=function(){buildFromTopo(w);};
+      sc.onerror=function(){tryGeojson();};
+      document.head.appendChild(sc);
+    }
+  })
+  .catch(tryGeojson);
+
+  function buildFromTopo(w){
+    var g=topojson.feature(w,w.objects.countries);
+    var nm={840:"United States of America",356:"India",784:"UAE",276:"Germany",124:"Canada",682:"Saudi Arabia",826:"United Kingdom",36:"Australia",158:"Taiwan",752:"Sweden",528:"Netherlands",702:"Singapore",512:"Oman",634:"Qatar",380:"Italy",392:"Japan",250:"France",458:"Malaysia",156:"China",410:"South Korea",554:"New Zealand",372:"Ireland",756:"Switzerland",208:"Denmark",578:"Norway",246:"Finland",56:"Belgium",40:"Austria",724:"Spain",710:"South Africa",76:"Brazil",484:"Mexico",360:"Indonesia",764:"Thailand",608:"Philippines",704:"Vietnam",48:"Bahrain",414:"Kuwait",400:"Jordan",818:"Egypt",586:"Pakistan",144:"Sri Lanka",792:"Turkey",616:"Poland",300:"Greece",620:"Portugal",376:"Israel",203:"Czech Republic",642:"Romania",348:"Hungary",643:"Russia"};
+    g.features.forEach(function(f){var id=parseInt(f.id,10);if(nm[id])f.properties.ADMIN=nm[id];});
+    renderGeo(fixAntimeridian(g));
+  }
+
+  function tryGeojson(){
+    setLdr("Trying alternate source…");
+    fetch("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson")
+    .then(function(r){if(!r.ok)throw 0;return r.json();})
+    .then(function(g){renderGeo(fixAntimeridian(g));})
+    .catch(function(){
+      hideLdr();
+      document.getElementById("map").innerHTML=
+        '<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px;font-family:var(--fb);">'
+        +'<div style="font-size:2rem;">🌐</div>'
+        +'<div style="font-size:15px;color:var(--t1);font-weight:600;">Map data unavailable</div>'
+        +'<div style="font-size:12px;color:var(--t2);">Check your internet connection and reload</div>'
+        +'<button onclick="location.reload()" style="margin-top:8px;padding:8px 20px;border-radius:20px;background:var(--ac);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;">↺ Reload</button>'
+        +'</div>';
+    });
+  }
+}
+
+function renderGeo(g){
+  GEO_CACHE=g;
+  gjL=L.geoJSON(g,{style:cStyle,onEachFeature:onEach}).addTo(map);
+  hideLdr();
+  updStats(getFiltered());
+  addVITPin();
+  addSmallCountryDots();
+  setTimeout(addLabels,300);
+  setTimeout(addCityPins,300);
+  buildScaleLegend();
+  document.getElementById("scale-leg").style.display="none"; /* hidden in normal mode */
+  runFlightAnimation();
+}
+
+/* ══ FLIGHT ANIMATION ════════════════════════════════════════ */
+var fltMap=null,fltDone=false;
+
+function runFlightAnimation(){
+  document.getElementById("flight-screen").classList.add("active");
+  /* Phase 1: 3s hero → then map phase */
+  setTimeout(startMapPhase,3000);
+}
+
+function startMapPhase(){
+  if(fltDone)return;
+  document.getElementById("fhero").classList.add("gone");
+  document.getElementById("fui").style.display="flex";
+
+  var isMob=window.innerWidth<768;
+  /* Mobile: start centered ON Vellore at zoom 5 so it fills screen */
+  fltMap=L.map("fmap",{
+    center:VIT,
+    zoom:isMob?5:4,
+    scrollWheelZoom:false,touchZoom:false,doubleClickZoom:false,
+    dragging:false,zoomControl:false,attributionControl:false,
+    keyboard:false,tap:false,zoomSnap:0.1
+  });
+  L.rectangle([[-90,-180],[90,180]],{color:"none",fillColor:"#0d1f35",fillOpacity:1,interactive:false}).addTo(fltMap);
+
+  /* USE CACHED GeoJSON — NO second fetch, NO CORS issue */
+  function useGeo(geo){
+    if(geo){
+      L.geoJSON(geo,{
+        style:function(f){
+          var cn=f.properties.ADMIN||f.properties.name||"";
+          var col=getArcColor(cn);
+          var hasAlumni=countryTotal(cn)>0;
+          return{
+            fillColor:hasAlumni?(col||"#2ecc71"):"#1e2a3a",
+            fillOpacity:hasAlumni?0.85:0.45,
+            color:hasAlumni?"rgba(255,255,255,.4)":"rgba(255,255,255,.06)",
+            weight:hasAlumni?1.2:0.3,opacity:1
+          };
+        },interactive:false
+      }).addTo(fltMap);
+    }
+    /* VIT pulse marker */
+    L.marker(VIT,{
+      icon:L.divIcon({className:"",html:'<div class="vit-pulse"></div>',iconAnchor:[9,9]}),
+      interactive:false,zIndexOffset:1000
+    }).addTo(fltMap);
+    L.marker(VIT,{
+      icon:L.divIcon({
+        className:"",
+        html:'<div style="font-family:Inter,sans-serif;font-size:11px;font-weight:700;color:#fbbc04;white-space:nowrap;text-shadow:-1px -1px 0 #000,1px 1px 0 #000,-1px 1px 0 #000,1px -1px 0 #000;margin-left:14px;margin-top:-5px;">📍 VIT Vellore</div>',
+        iconAnchor:[0,6]
+      }),interactive:false,zIndexOffset:1001
+    }).addTo(fltMap);
+    /* Fly out to world view */
+    fltMap.flyTo([20,20],2,{animate:true,duration:1.4,easeLinearity:0.3});
+    setTimeout(function(){if(!fltDone)startArcs();},1500);
+  }
+  /* Use cache if available (always will be since renderGeo runs first) */
+  if(GEO_CACHE){useGeo(GEO_CACHE);}
+  else{useGeo(null);} /* fallback: no background map, still draw arcs */
+}
+
+function latLngToSVG(lat,lng){
+  var pt=fltMap.latLngToContainerPoint(L.latLng(lat,lng));
+  return{x:pt.x,y:pt.y};
+}
+function controlPt(lat1,lng1,lat2,lng2){
+  var mlat=(lat1+lat2)/2,mlng=(lng1+lng2)/2;
+  var dist=Math.sqrt(Math.pow(lat2-lat1,2)+Math.pow(lng2-lng1,2));
+  mlat+=dist*0.3;
+  return[mlat,mlng];
+}
+
+function startArcs(){
+  if(fltDone)return;
+  var svg=document.getElementById("farc");
+  while(svg.firstChild)svg.removeChild(svg.firstChild);
+  var defs=document.createElementNS("http://www.w3.org/2000/svg","defs");
+  defs.innerHTML='<filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
+  svg.appendChild(defs);
+
+  /* Get unique destinations ONLY from data (not all countries) */
+  var destinations=[];
+  var seen={};
+  ALUMNI.forEach(function(a){
+    if(a.country&&CENT[a.country]&&!seen[a.country]){seen[a.country]=1;destinations.push(a.country);}
+  });
+
+  var total=destinations.length;
+  var totalMs=4800; /* 5s total − 0.2s buffer */
+  var stagger=totalMs/total;
+  var routeMs=Math.min(stagger*1.2,800);
+  var arrived=0;
+
+  destinations.forEach(function(cn,idx){
+    setTimeout(function(){
+      if(fltDone)return;
+      var col=getArcColor(cn);
+      drawArc(svg,cn,routeMs,col,function(){
+        arrived++;
+        document.getElementById("fprog-bar").style.width=Math.round(arrived/total*100)+"%";
+        document.getElementById("fcount").textContent=arrived+" / "+total+" countries reached";
+        if(arrived===total)setTimeout(finishFlight,600);
+      });
+    },idx*stagger);
+  });
+}
+
+function drawArc(svg,cn,duration,col,onDone){
+  var dest=CENT[cn];
+  if(!dest){onDone&&onDone();return;}
+  var from=latLngToSVG(VIT[0],VIT[1]);
+  var to=latLngToSVG(dest[0],dest[1]);
+  var cp=controlPt(VIT[0],VIT[1],dest[0],dest[1]);
+  var cpPt=latLngToSVG(cp[0],cp[1]);
+
+  /* Arc trail */
+  var trail=document.createElementNS("http://www.w3.org/2000/svg","path");
+  var d="M"+from.x.toFixed(1)+","+from.y.toFixed(1)+" Q"+cpPt.x.toFixed(1)+","+cpPt.y.toFixed(1)+" "+to.x.toFixed(1)+","+to.y.toFixed(1);
+  trail.setAttribute("d",d);trail.setAttribute("fill","none");
+  trail.setAttribute("stroke",col);trail.setAttribute("stroke-width","1.8");
+  trail.setAttribute("opacity","0.75");trail.setAttribute("filter","url(#glow)");
+  svg.appendChild(trail);
+  var len;try{len=trail.getTotalLength();}catch(e){len=300;}
+  trail.setAttribute("stroke-dasharray",len);trail.setAttribute("stroke-dashoffset",len);
+
+  /* Plane emoji */
+  var plane=document.createElementNS("http://www.w3.org/2000/svg","text");
+  plane.setAttribute("font-size","14");plane.setAttribute("text-anchor","middle");plane.setAttribute("dominant-baseline","middle");
+  plane.textContent="✈";
+  svg.appendChild(plane);
+
+  var t0=null;
+  function step(ts){
+    if(!t0)t0=ts;
+    var pct=Math.min((ts-t0)/duration,1);
+    var e=1-Math.pow(1-pct,3);
+    trail.setAttribute("stroke-dashoffset",len*(1-e));
+    var bt=e,bmt=1-bt;
+    var px=bmt*bmt*from.x+2*bmt*bt*cpPt.x+bt*bt*to.x;
+    var py=bmt*bmt*from.y+2*bmt*bt*cpPt.y+bt*bt*to.y;
+    var dt=Math.max(bt-.01,0),dbt=1-dt;
+    var tx2=dbt*dbt*from.x+2*dbt*dt*cpPt.x+dt*dt*to.x;
+    var ty2=dbt*dbt*from.y+2*dbt*dt*cpPt.y+dt*dt*to.y;
+    var ang=Math.atan2(py-ty2,px-tx2)*(180/Math.PI);
+    plane.setAttribute("transform","translate("+px.toFixed(1)+","+py.toFixed(1)+") rotate("+ang.toFixed(1)+")");
+    if(pct<1){requestAnimationFrame(step);}
+    else{
+      plane.setAttribute("opacity","0");
+      /* Country name label — white text, black outline, always readable */
+      var lbl=document.createElementNS("http://www.w3.org/2000/svg","text");
+      lbl.setAttribute("x",to.x.toFixed(1));
+      lbl.setAttribute("y",(to.y-14).toFixed(1));
+      lbl.setAttribute("text-anchor","middle");
+      lbl.setAttribute("font-size","11");
+      lbl.setAttribute("font-weight","700");
+      lbl.setAttribute("font-family","Inter,sans-serif");
+      lbl.setAttribute("fill","#ffffff");
+      lbl.setAttribute("stroke","#000000");
+      lbl.setAttribute("stroke-width","2.5");
+      lbl.setAttribute("paint-order","stroke");
+      lbl.setAttribute("opacity","0");
+      lbl.textContent=gf(cn)+" "+cn;
+      svg.appendChild(lbl);
+      /* Arrival pulse */
+      var dot=document.createElementNS("http://www.w3.org/2000/svg","circle");
+      dot.setAttribute("cx",to.x.toFixed(1));dot.setAttribute("cy",to.y.toFixed(1));
+      dot.setAttribute("r","5");dot.setAttribute("fill",col);dot.setAttribute("filter","url(#glow)");
+      svg.appendChild(dot);
+      var ring=document.createElementNS("http://www.w3.org/2000/svg","circle");
+      ring.setAttribute("cx",to.x.toFixed(1));ring.setAttribute("cy",to.y.toFixed(1));
+      ring.setAttribute("r","5");ring.setAttribute("fill","none");ring.setAttribute("stroke",col);ring.setAttribute("stroke-width","2");
+      svg.appendChild(ring);
+      var rs=null;
+      function animRing(ts2){
+        if(!rs)rs=ts2;var pp=Math.min((ts2-rs)/500,1);
+        ring.setAttribute("r",String(5+pp*14));ring.setAttribute("opacity",String(1-pp));
+        lbl.setAttribute("opacity",String(Math.min(pp*2,1)));
+        if(pp<1)requestAnimationFrame(animRing);else onDone&&onDone();
+      }
+      requestAnimationFrame(animRing);
+    }
+  }
+  requestAnimationFrame(step);
+}
+
+function finishFlight(){
+  if(fltDone)return;fltDone=true;
+  document.getElementById("flight-screen").classList.add("fade-out");
+  setTimeout(function(){
+    document.getElementById("flight-screen").classList.remove("active");
+    document.getElementById("flight-screen").classList.remove("fade-out");
+    if(fltMap){fltMap.remove();fltMap=null;}
+  },900);
+}
+function skipFlight(){finishFlight();}
+
+/* ══ INIT ════════════════════════════════════════════════════ */
+function initApp(){
+  var seen={};
+  ALUMNI.forEach(function(a){if(a.country)seen[a.country]=1;});
+  ALUMNI_COUNTRIES=Object.keys(seen).sort();
+  assignCountryColors();
+  buildFilters();
+  updStats(ALUMNI);
+  initMap();
+}
+
+let isDataLoaded = false;
+loadData();
+</script>
+</body>
+</html>
