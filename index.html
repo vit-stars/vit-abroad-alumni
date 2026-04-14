@@ -1718,8 +1718,6 @@ function startArcs(){
       var col=getArcColor(cn);
       drawArc(svg,cn,routeMs,col,function(){
         arrived++;
-        document.getElementById("fprog-bar").style.width=Math.round(arrived/total*100)+"%";
-        document.getElementById("fcount").textContent=arrived+" / "+total+" countries reached";
         if(arrived===total)setTimeout(finishFlight,600);
       });
     },idx*stagger);
