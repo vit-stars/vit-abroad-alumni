@@ -1218,7 +1218,7 @@ function onGS(){
     var ph=a.photo?'<img src="'+ec(a.photo)+'" alt=""/>':'<span>'+ec(ini)+'</span>';
     var dataStr=JSON.stringify(a).replace(/'/g,"&#39;");
     /* FIX: Search click opens person detail directly */
-    html+='<div class="sdr" onclick="srClickPerson('+dataStr+')">'
+    html+='<div class="sdr" onclick=\'srClickPerson('+dataStr+')\'>'
       +'<div class="sdp '+(a.gender==="M"?"m":"f")+'">'+ph+'</div>'
       +'<div style="flex:1;min-width:0;"><div class="sdn">'+ec(a.name)+'</div>'
       +'<div class="sdm"><span class="sdc-dot" style="background:'+col+'"></span>'
