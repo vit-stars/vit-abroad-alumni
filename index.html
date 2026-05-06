@@ -19,8 +19,9 @@
   --sh:rgba(0,0,0,.12);--sh2:rgba(0,0,0,.06);
   --bar:54px;--panel-w:440px;
   --fd:'Playfair Display',serif;--fb:'Inter',sans-serif;--ease:.3s cubic-bezier(.4,0,.2,1);
-  /* map mode colours — normal (Google Maps style) */
-  --ocean:#aadaff;--land-empty:#d4f589a4;--border-empty:#121312;
+  --ocean:#93c9e3;--land-empty:#d4f589a4;
+  /* FIX: Light theme empty country border = dark */
+  --border-empty:#888a8d;
 }
 /* ── Dark Mode ── */
 [data-theme="dark"]{
@@ -31,29 +32,21 @@
   --am:#ffd166;--am2:#ffe099;--ambg:rgba(255,209,102,.1);
   --red:#ff8080;--grn:#4ddb8a;
   --sh:rgba(0,0,0,.6);--sh2:rgba(0,0,0,.4);
-  /* Dark ocean: deep teal-blue (like real night sea, not black) */
-  --ocean:#0e2a45;
-  /* Empty country: slate grey, clearly different from ocean */
-  --land-empty:#2c3140;
-  --border-empty:#3e4455;
+  --ocean:#0a1e2e;--land-empty:#2c3140;
+  /* FIX: Dark theme empty country border = white */
+  --border-empty:#ffffff55;
 }
-/* ── Map Mode: Terrain ── */
-[data-mapmode="terrain"]{
-  --ocean:#93c9e3;--land-empty:#e5e0d8;--border-empty:#b8b0a0;
-}
-[data-theme="dark"][data-mapmode="terrain"]{
-  --ocean:#0a1e2e;--land-empty:#1e1a14;--border-empty:#2e2820;
-}
-/* ── Map Mode: Satellite ── */
+/* ── Map Mode: Satellite ── (CSS vars only for fallback) */
 [data-mapmode="satellite"]{
-  --ocean:#1a3550;--land-empty:#3a4a3a;--border-empty:#1a1a1a;
+  --ocean:#0d1b2a;--land-empty:#1a2e1a;--border-empty:#ffffff22;
 }
 [data-theme="dark"][data-mapmode="satellite"]{
-  --ocean:#060e18;--land-empty:#0e1a10;--border-empty:#0a0a0a;
+  --ocean:#060e18;--land-empty:#0e1a10;--border-empty:#ffffff22;
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;width:100%;overflow:hidden;font-family:var(--fb);background:var(--ocean);color:var(--t1);-webkit-font-smoothing:antialiased;}
+
 /* ══ LOADER ═══════════════════════════════════════════════════ */
 #ldr{position:fixed;inset:0;z-index:9000;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .5s;}
 #ldr.hide{opacity:0;pointer-events:none;}
@@ -88,7 +81,7 @@ html,body{height:100%;width:100%;overflow:hidden;font-family:var(--fb);backgroun
   #sw.sw-open #gsclose{display:flex;align-items:center;}
   #sw.sw-open #gx{right:36px;}
 }
-#sd{position:absolute;top:calc(100% + 8px);left:0;right:0;background:var(--s1);border:1px solid var(--bd2);border-radius:12px;box-shadow:0 8px 40px var(--sh);max-height:320px;overflow-y:auto;z-index:3000;display:none;min-width:280px;}
+#sd{position:absolute;top:calc(100% + 8px);left:0;right:0;background:var(--s1);border:1px solid var(--bd2);border-radius:12px;box-shadow:0 8px 40px var(--sh);max-height:340px;overflow-y:auto;z-index:3000;display:none;min-width:280px;}
 @media(max-width:767px){#sd{position:fixed;top:62px;left:12px;right:12px;z-index:1201;}}
 #sd.on{display:block;}
 #sd::-webkit-scrollbar{width:3px;}#sd::-webkit-scrollbar-thumb{background:var(--ac);border-radius:2px;}
@@ -104,6 +97,9 @@ html,body{height:100%;width:100%;overflow:hidden;font-family:var(--fb);backgroun
 .sdm{font-size:11px;color:var(--t2);display:flex;align-items:center;gap:4px;margin-top:1px;}
 .sdc-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .sdnone{padding:16px;text-align:center;color:var(--t2);font-size:13px;}
+/* Search result shows "View Profile →" hint */
+.sdr-arrow{font-size:10px;color:var(--ac);font-weight:700;flex-shrink:0;opacity:0;transition:opacity .15s;}
+.sdr:hover .sdr-arrow{opacity:1;}
 
 /* bar right */
 #br{display:flex;align-items:center;gap:7px;margin-left:auto;flex-shrink:0;}
@@ -131,7 +127,7 @@ html,body{height:100%;width:100%;overflow:hidden;font-family:var(--fb);backgroun
 .fp-rst{padding:6px 12px;border-radius:8px;border:1px solid rgba(217,48,37,.3);background:rgba(217,48,37,.06);color:var(--red);font-family:var(--fb);font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;align-self:flex-end;flex-shrink:0;}
 .fp-rst:hover{background:rgba(217,48,37,.12);}
 
-/* ══ MAP WRAPPER — full width, no gaps ═══════════════════════ */
+/* ══ MAP WRAPPER — full width ═══════════════════════ */
 #mw{
   position:fixed;
   top:var(--bar);left:0;bottom:0;right:0;
@@ -140,7 +136,7 @@ html,body{height:100%;width:100%;overflow:hidden;font-family:var(--fb);backgroun
   overflow:hidden;
   margin:0;padding:0;
 }
-body.panel-open #mw{right:var(--panel-w);}
+/* Desktop panel no longer shifts map — panel overlays map */
 #map{width:100%;height:100%;display:block;margin:0;padding:0;}
 .leaflet-container{width:100%!important;}
 
@@ -150,7 +146,6 @@ body.panel-open #mw{right:var(--panel-w);}
 .leaflet-control-zoom a{background:var(--s1)!important;color:var(--ac)!important;border-bottom:1px solid var(--bd)!important;font-weight:700!important;font-size:16px!important;line-height:28px!important;width:28px!important;height:28px!important;}
 .leaflet-control-zoom a:hover{background:var(--acbg)!important;}
 .leaflet-control-attribution{display:none!important;}
-
 
 /* tooltip */
 .mtt{background:var(--s1)!important;border:1px solid var(--bd2)!important;border-radius:10px!important;padding:10px 13px!important;font-family:var(--fb)!important;font-size:12px!important;box-shadow:0 8px 30px var(--sh)!important;pointer-events:none!important;color:var(--t1)!important;min-width:130px;}
@@ -163,8 +158,6 @@ body.panel-open #mw{right:var(--panel-w);}
 .mtt-none{font-size:10.5px;color:var(--t3);margin-top:2px;}
 
 /* ══ MAP OVERLAY CONTROLS ════════════════════════════════════ */
-
-/* Live chip */
 @keyframes chipIn{from{opacity:0;transform:translateX(-50%) translateY(-10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 #live-chip{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:400;background:var(--s1);border:1px solid var(--bd2);border-radius:50px;padding:6px 16px;box-shadow:0 2px 12px var(--sh);display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--t2);white-space:nowrap;animation:chipIn .5s cubic-bezier(.34,1.56,.64,1) both;pointer-events:none;}
 .chip-dot{width:8px;height:8px;border-radius:50%;background:#34a853;flex-shrink:0;animation:chipPulse 2s ease infinite;}
@@ -210,6 +203,27 @@ body.panel-open #mw{right:var(--panel-w);}
 .cli{font-family:var(--fb);font-size:10px;font-weight:600;color:#1a1a1a;white-space:nowrap;pointer-events:none;line-height:1;text-shadow:-1.5px -1.5px 0 rgba(255,255,255,.9),1.5px -1.5px 0 rgba(255,255,255,.9),-1.5px 1.5px 0 rgba(255,255,255,.9),1.5px 1.5px 0 rgba(255,255,255,.9);}
 [data-theme="dark"] .cli{color:#e8eaed;text-shadow:-1.5px -1.5px 0 rgba(0,0,0,.8),1.5px -1.5px 0 rgba(0,0,0,.8),-1.5px 1.5px 0 rgba(0,0,0,.8),1.5px 1.5px 0 rgba(0,0,0,.8);}
 
+/* ── Mobile Country Count Badges ── */
+.mob-country-badge{
+  position:absolute;z-index:450;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;gap:1px;
+  transform:translate(-50%,-50%);
+  white-space:nowrap;
+}
+.mob-country-badge-name{
+  font-size:9.5px;font-weight:700;font-family:var(--fb);
+  color:#fff;
+  text-shadow:-1px -1px 0 rgba(0,0,0,.7),1px -1px 0 rgba(0,0,0,.7),-1px 1px 0 rgba(0,0,0,.7),1px 1px 0 rgba(0,0,0,.7);
+  line-height:1.1;
+}
+.mob-country-badge-count{
+  font-size:9px;font-weight:800;font-family:var(--fb);
+  background:rgba(0,0,0,.55);color:#fff;
+  border-radius:10px;padding:1px 6px;
+  border:1px solid rgba(255,255,255,.3);
+  line-height:1.3;
+}
+
 /* City pins */
 .city-dot{width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35);cursor:pointer;}
 
@@ -219,15 +233,31 @@ body.panel-open #mw{right:var(--panel-w);}
 @keyframes pinDrop{from{transform:rotate(-45deg) translateY(-20px);opacity:0;}to{transform:rotate(-45deg);opacity:1;}}
 .vit-pin{animation:pinDrop .5s cubic-bezier(.34,1.56,.64,1) both;}
 
+
 /* ══ FLIGHT ANIMATION ═════════════════════════════════════════ */
-#flight-screen{position:fixed;inset:0;z-index:8000;display:none;flex-direction:column;background:#0d1117;overflow:hidden;}
+#flight-screen{
+  position:fixed;inset:0;z-index:8000;display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(10,14,20,.92);backdrop-filter:blur(6px);overflow:hidden;
+}
 #flight-screen.active{display:flex;}
 @keyframes fsOut{to{opacity:0;}}
 #flight-screen.fade-out{animation:fsOut .8s ease forwards;}
-#fmap{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
+
+/* Flight map wrapper — same dimensions as main map, centered */
+#fmap-wrap{
+  position:relative;
+  width:calc(100vw - 0px);
+  height:calc(100vh - var(--bar));
+  max-width:100vw;
+  max-height:calc(100vh - var(--bar));
+  border-radius:0;
+  overflow:hidden;
+  box-shadow:0 0 80px rgba(0,0,0,.8);
+}
+#fmap{width:100%;height:100%;z-index:0;}
 #farc{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;}
 
-/* Hero phase */
 #fhero{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:60px;background:linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,.3) 50%,rgba(0,0,0,.05) 100%);transition:opacity .8s ease;}
 #fhero.gone{opacity:0;pointer-events:none;}
 #fhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(1.1) brightness(.75);animation:heroZoom 3.5s ease forwards;}
@@ -240,7 +270,6 @@ body.panel-open #mw{right:var(--panel-w);}
 .fhero-sub{font-size:13px;color:rgba(255,255,255,.75);text-align:center;}
 .fhero-loc{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:5px 14px;font-size:12px;color:#fff;font-weight:600;}
 
-/* Flight bottom UI */
 #fui{position:absolute;bottom:0;left:0;right:0;z-index:20;background:linear-gradient(to top,rgba(0,0,0,.85),transparent);padding:24px 20px 32px;display:none;flex-direction:column;align-items:center;gap:10px;}
 #ftitle{font-family:var(--fd);font-size:clamp(16px,3.5vw,22px);color:#ffffff;text-align:center;}
 #ftitle em{color:#fbbc04;font-style:normal;}
@@ -251,12 +280,18 @@ body.panel-open #mw{right:var(--panel-w);}
 #fskip{padding:8px 20px;border-radius:20px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.85);font-family:var(--fb);font-size:12px;font-weight:600;cursor:pointer;}
 #fskip:hover{background:rgba(255,255,255,.22);}
 
-/* VIT Vellore pulsing dot on flight map */
 .vit-pulse{width:18px;height:18px;border-radius:50%;background:rgba(251,188,4,.9);border:2.5px solid #fff;box-shadow:0 0 0 0 rgba(251,188,4,.6);animation:vitGlow 1.8s ease infinite;}
 @keyframes vitGlow{0%{box-shadow:0 0 0 0 rgba(251,188,4,.6);}70%{box-shadow:0 0 0 10px rgba(251,188,4,0);}100%{box-shadow:0 0 0 0 rgba(251,188,4,0);}}
 
-/* ══ DESKTOP PANEL ═══════════════════════════════════════════ */
-#panel{position:fixed;top:var(--bar);right:0;bottom:0;width:var(--panel-w);background:var(--s1);border-left:1px solid var(--bd2);display:flex;flex-direction:column;overflow:hidden;transform:translateX(100%);transition:transform var(--ease);z-index:600;box-shadow:-4px 0 24px var(--sh);}
+/* ══ DESKTOP PANEL (side, overlays map, no width shift) ═══════ */
+#panel{
+  position:fixed;top:var(--bar);right:0;bottom:0;
+  width:var(--panel-w);
+  background:var(--s1);border-left:1px solid var(--bd2);
+  display:flex;flex-direction:column;overflow:hidden;
+  transform:translateX(100%);transition:transform var(--ease);
+  z-index:600;box-shadow:-8px 0 40px var(--sh);
+}
 #panel.open{transform:translateX(0);}
 /* panel header */
 .pnh{padding:16px 16px 13px;flex-shrink:0;position:relative;overflow:hidden;}
@@ -286,14 +321,11 @@ body.panel-open #mw{right:var(--panel-w);}
 .pgc.on{background:var(--acbg2);border-color:var(--ac);color:var(--ac);}
 .pgc.mon{background:rgba(26,115,232,.1);border-color:var(--ac);color:var(--ac);}
 .pgc.fon{background:rgba(217,48,37,.08);border-color:var(--red);color:var(--red);}
-/* panel table — click row for modal */
+/* panel table */
 .pnt{flex:1;overflow-y:auto;overflow-x:hidden;width:100%;}
 .pnt::-webkit-scrollbar{width:3px;}
 .pnt::-webkit-scrollbar-thumb{background:var(--ac);border-radius:2px;}
 table.tb{width:100%;border-collapse:collapse;table-layout:fixed;}
-
-table.tb{width:100%;border-collapse:collapse;table-layout:fixed;}
-/* Fixed column widths — match inline styles in buildTbl */
 table.tb col.c0{width:26px;}
 table.tb col.c1{width:36px;}
 table.tb col.c2{width:auto;}
@@ -324,7 +356,6 @@ table.tb td{
   white-space:nowrap;
   text-overflow:ellipsis;
 }
-/* Name cell: allow wrap, use space generously */
 table.tb td:nth-child(3){
   white-space:normal;
   word-break:break-word;
@@ -334,113 +365,299 @@ table.tb td:nth-child(3){
 table.tb tbody tr{cursor:pointer;transition:background .1s;}
 table.tb tbody tr:hover td{background:var(--acbg);}
 
-/* PHOTO */
 .tdph{
   width:32px;height:32px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   font-size:8.5px;font-weight:700;
   overflow:hidden;flex-shrink:0;
 }
-
-.tdph img{
-  width:100%;height:100%;
-  object-fit:cover;border-radius:50%;
-}
-
-/* GENDER */
+.tdph img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
 .tdm{background:rgba(26,115,232,.12);color:var(--ac);}
 .tdf{background:rgba(217,48,37,.1);color:var(--red);}
-
 .tda{
   width:22px;height:22px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-size:9px;font-weight:700;margin-left:auto; /* ✅ push right */
+  font-size:9px;font-weight:700;margin-left:auto;
 }
-
-/* BATCH */
 .tdbt{
   font-size:10px;font-weight:700;
   padding:3px 8px;border-radius:10px;
   background:var(--ambg);color:var(--am);
   border:1px solid rgba(251,188,4,.25);
-  display:inline-block;
-  margin-left:auto; /* ✅ push right */
+  display:inline-block;margin-left:auto;
 }
-
-/* NAME */
-.tdnm{
-  font-weight:600;
-  color:var(--t1);
-
-  /* ✅ FULL TEXT */
-  white-space:normal;
-  word-break:break-word;
-}
-
-/* UNUSED BUT KEPT */
+.tdnm{font-weight:600;color:var(--t1);white-space:normal;word-break:break-word;}
 .tdco{color:var(--t2);font-size:11px;}
 .nores{padding:28px;text-align:center;color:var(--t2);font-size:13px;}
-/* empty state */
 .pnemp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px;text-align:center;}
 .pnemp-ic{font-size:3.5rem;opacity:.1;animation:float 4s ease-in-out infinite;}
 @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
 .pnemp h3{font-family:var(--fd);font-size:18px;color:var(--t2);}
 .pnemp p{font-size:12.5px;color:var(--t3);line-height:1.8;}
 
-/* ══ ALUMNI DETAIL MODAL ══════════════════════════════════════ */
+/* ══ ALUMNI DETAIL MODAL — redesigned with large photo ══════ */
 #amodal-bg{
   display:none;position:fixed;inset:0;z-index:2000;
-  background:rgba(0,0,0,.45);backdrop-filter:blur(4px);
+  background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
   align-items:center;justify-content:center;padding:20px;
 }
 #amodal-bg.on{display:flex;}
 #amodal{
-  background:var(--s1);border-radius:20px;
-  width:100%;max-width:420px;max-height:88vh;
-  overflow-y:auto;
-  box-shadow:0 24px 60px rgba(0,0,0,.3);
+  background:var(--s1);border-radius:24px;
+  width:100%;max-width:500px;max-height:90vh;
+  overflow-y:auto;overflow-x:hidden;
+  box-shadow:0 32px 80px rgba(0,0,0,.4);
   position:relative;
-  animation:modalIn .25s cubic-bezier(.34,1.56,.64,1) both;
+  animation:modalIn .28s cubic-bezier(.34,1.56,.64,1) both;
 }
-@keyframes modalIn{from{opacity:0;transform:scale(.92) translateY(20px);}to{opacity:1;transform:none;}}
-/* modal header — gradient same as panel */
+@keyframes modalIn{from{opacity:0;transform:scale(.9) translateY(24px);}to{opacity:1;transform:none;}}
+/* Large photo header */
 .am-head{
-  padding:20px 20px 16px;
-  background:linear-gradient(135deg,var(--ac) 0%,#7c3aed 100%);
-  border-radius:20px 20px 0 0;
   position:relative;
+  background:linear-gradient(150deg,var(--ac) 0%,#7c3aed 100%);
+  border-radius:24px 24px 0 0;
+  padding-bottom:0;
+  overflow:hidden;
+  min-height:260px;
+  display:flex;flex-direction:column;
+}
+.am-head-bg{
+  position:absolute;inset:0;
+  background:inherit;
+  z-index:0;
+}
+.am-head-bg::before{
+  content:'';position:absolute;
+  top:-60px;right:-60px;width:200px;height:200px;
+  border-radius:50%;background:rgba(255,255,255,.07);
+}
+.am-head-bg::after{
+  content:'';position:absolute;
+  bottom:-30px;left:-30px;width:140px;height:140px;
+  border-radius:50%;background:rgba(255,255,255,.05);
 }
 .am-close{
-  position:absolute;top:14px;right:14px;
-  width:28px;height:28px;border-radius:50%;
-  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);
+  position:absolute;top:14px;right:14px;z-index:10;
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);
   color:#fff;font-size:14px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
 }
-.am-close:hover{background:rgba(255,255,255,.3);}
+.am-close:hover{background:rgba(255,255,255,.35);}
+.am-photo-wrap{
+  position:relative;z-index:2;
+  display:flex;flex-direction:column;align-items:center;
+  padding:32px 24px 20px;
+  gap:14px;
+}
 .am-photo{
-  width:70px;height:70px;border-radius:50%;
-  border:3px solid rgba(255,255,255,.5);
+  width:140px;height:140px;border-radius:50%;
+  border:5px solid rgba(255,255,255,.7);
   overflow:hidden;display:flex;align-items:center;justify-content:center;
-  font-size:24px;font-weight:700;color:#fff;
-  background:rgba(255,255,255,.18);
-  margin-bottom:12px;
+  font-size:48px;font-weight:700;color:#fff;
+  background:rgba(255,255,255,.22);
+  box-shadow:0 12px 40px rgba(0,0,0,.4),0 0 0 8px rgba(255,255,255,.15);
+  flex-shrink:0;
 }
 .am-photo img{width:100%;height:100%;object-fit:cover;}
-.am-name{font-family:var(--fd);font-size:20px;color:#fff;line-height:1.2;margin-bottom:4px;}
-.am-role{font-size:12px;color:rgba(255,255,255,.75);}
+.am-name{font-family:var(--fd);font-size:22px;color:#fff;line-height:1.2;text-align:center;}
+.am-role{font-size:12.5px;color:rgba(255,255,255,.8);text-align:center;line-height:1.5;}
+.am-tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px;}
+.am-tag{
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);
+  border-radius:20px;padding:4px 12px;
+  font-size:11px;font-weight:600;color:#fff;
+  display:flex;align-items:center;gap:4px;
+}
 /* modal body */
-.am-body{padding:20px;}
-.am-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;}
-.am-row:last-child{margin-bottom:0;}
-.am-icon{width:36px;height:36px;border-radius:10px;background:var(--s2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.am-body{padding:24px;}
+.am-section{
+  background:var(--s2);border:1px solid var(--bd);border-radius:14px;
+  overflow:hidden;margin-bottom:12px;
+}
+.am-section:last-child{margin-bottom:0;}
+.am-row{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 16px;
+  border-bottom:1px solid var(--bd);
+}
+.am-row:last-child{border-bottom:none;}
+.am-icon{
+  width:34px;height:34px;border-radius:10px;
+  background:var(--acbg);border:1px solid var(--bd);
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;flex-shrink:0;
+}
 .am-info{flex:1;min-width:0;}
 .am-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:2px;}
-.am-value{font-size:13px;font-weight:600;color:var(--t1);word-break:break-word;}
-.am-value.sub{font-size:11.5px;color:var(--t2);font-weight:500;}
-.am-divider{height:1px;background:var(--bd);margin:14px 0;}
+.am-value{font-size:13.5px;font-weight:600;color:var(--t1);word-break:break-word;}
+.am-value.sub{font-size:11.5px;color:var(--t2);font-weight:500;margin-top:2px;}
 
-/* ══ MOBILE MODAL ════════════════════════════════════════════ */
+/* ══ VIEW ALL — Full Page Overlay Panel ══════════════════════ */
+#va-overlay{
+  display:none;position:fixed;inset:0;
+  z-index:1500;
+  background:rgba(0,0,0,.45);backdrop-filter:blur(4px);
+}
+#va-overlay.on{display:block;}
+
+#va-panel{
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  z-index:1600;
+  display:none;
+  flex-direction:column;
+  overflow:hidden;
+  background:var(--bg);
+  animation:vaIn .3s cubic-bezier(.4,0,.2,1) both;
+}
+#va-panel.on{display:flex;}
+@keyframes vaIn{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:none;}}
+
+/* View All Header */
+.va-head{
+  flex-shrink:0;
+  background:linear-gradient(135deg,var(--ac) 0%,#7c3aed 100%);
+  padding:0 24px;
+  display:flex;align-items:center;gap:16px;
+  height:68px;
+  position:relative;overflow:hidden;
+}
+.va-head::after{
+  content:'';position:absolute;
+  bottom:-50px;right:-50px;width:160px;height:160px;
+  border-radius:50%;background:rgba(255,255,255,.06);
+}
+.va-head-icon{font-size:22px;flex-shrink:0;}
+.va-head-title{font-family:var(--fd);font-size:20px;color:#fff;flex:1;}
+.va-head-sub{font-size:12px;color:rgba(255,255,255,.7);}
+.va-head-close{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);
+  color:#fff;font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;z-index:2;
+}
+.va-head-close:hover{background:rgba(255,255,255,.28);}
+
+/* View All Stats Strip */
+.va-stats{
+  flex-shrink:0;
+  display:flex;
+  background:var(--s1);border-bottom:1px solid var(--bd2);
+  box-shadow:0 1px 0 var(--bd);
+}
+.va-stat{
+  flex:1;padding:10px 8px;text-align:center;
+  border-right:1px solid var(--bd);
+}
+.va-stat:last-child{border-right:none;}
+.va-sv{font-family:var(--fd);font-size:17px;font-weight:700;line-height:1;}
+.va-sl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-top:2px;}
+
+/* View All Controls */
+.va-controls{
+  flex-shrink:0;
+  padding:12px 16px;
+  background:var(--s1);
+  border-bottom:1px solid var(--bd2);
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+}
+.va-search-wrap{position:relative;flex:1;min-width:200px;}
+.va-search-wrap input{
+  width:100%;padding:8px 32px 8px 34px;
+  background:var(--s2);border:1px solid var(--bd);border-radius:24px;
+  color:var(--t1);font-family:var(--fb);font-size:13px;outline:none;transition:all .15s;
+}
+.va-search-wrap input:focus{border-color:var(--ac);background:var(--s1);}
+.va-search-wrap input::placeholder{color:var(--t3);}
+.va-si{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:13px;pointer-events:none;}
+/* Country filter */
+.va-country-filter{
+  display:flex;gap:6px;align-items:center;flex-wrap:wrap;
+  flex:1;min-width:200px;
+}
+.va-csel{
+  padding:7px 24px 7px 10px;
+  background:var(--s2);border:1px solid var(--bd);border-radius:8px;
+  color:var(--t1);font-family:var(--fb);font-size:12px;outline:none;cursor:pointer;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235f6368' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;
+  min-width:140px;
+}
+.va-csel:focus{border-color:var(--ac);}
+[data-theme="dark"] .va-csel option{background:var(--s2);}
+.va-gender-btns{display:flex;gap:4px;}
+.va-gbtn{
+  padding:6px 12px;border-radius:20px;border:1px solid var(--bd);
+  background:var(--s2);color:var(--t2);
+  font-size:11.5px;font-weight:600;cursor:pointer;transition:all .12s;
+  font-family:var(--fb);white-space:nowrap;
+}
+.va-gbtn.on{background:var(--acbg2);border-color:var(--ac);color:var(--ac);}
+.va-gbtn.mon{background:rgba(26,115,232,.1);border-color:var(--ac);color:var(--ac);}
+.va-gbtn.fon{background:rgba(217,48,37,.08);border-color:var(--red);color:var(--red);}
+
+/* View All Grid — card layout */
+.va-body{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  padding:16px;
+}
+.va-body::-webkit-scrollbar{width:4px;}
+.va-body::-webkit-scrollbar-thumb{background:var(--ac);border-radius:2px;}
+
+.va-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:12px;
+}
+@media(max-width:767px){
+  .va-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:400px){
+  .va-grid{grid-template-columns:1fr;}
+}
+
+.va-card{
+  background:var(--s1);border:1px solid var(--bd);border-radius:14px;
+  padding:14px;cursor:pointer;
+  transition:transform .15s,box-shadow .15s,border-color .15s;
+  display:flex;align-items:flex-start;gap:12px;
+  overflow:hidden;
+}
+.va-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 32px var(--sh);
+  border-color:var(--ac);
+}
+.va-card-photo{
+  width:48px;height:48px;border-radius:50%;
+  flex-shrink:0;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;
+}
+.va-card-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.va-card-info{flex:1;min-width:0;}
+.va-card-name{font-weight:700;font-size:13px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.va-card-role{font-size:11px;color:var(--t2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.va-card-loc{font-size:10.5px;color:var(--t3);margin-top:4px;display:flex;align-items:center;gap:4px;}
+.va-card-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+.va-card-batch{
+  font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:10px;
+  background:var(--ambg);color:var(--am);border:1px solid rgba(251,188,4,.25);
+}
+.va-card-gender{
+  width:20px;height:20px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8.5px;font-weight:700;
+}
+.va-nores{
+  grid-column:1/-1;padding:48px;text-align:center;color:var(--t2);font-size:14px;
+}
+
+/* ══ MOBILE FULL-SCREEN ══════════════════════════════════════ */
 #mob{display:none;position:fixed;inset:0;z-index:1100;background:var(--s1);flex-direction:column;overflow:hidden;}
 #mob.on{display:flex;}
 .mob-bar{flex-shrink:0;background:linear-gradient(135deg,var(--ac) 0%,#7c3aed 100%);padding:0 14px;display:flex;align-items:center;gap:10px;position:relative;overflow:hidden;height:calc(52px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top);}
@@ -476,26 +693,32 @@ table.tb tbody tr:hover td{background:var(--acbg);}
   .mm-btn{padding:7px 9px;font-size:17px;}
   .mm-txt{display:none;}
   #scale-leg{bottom:10px;left:10px;padding:8px 10px;}
-  /* View All: icon only on mobile */
   #btn-viewall{font-size:10px;padding:5px 8px;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;}
   #btn-viewall-txt{display:none;}
-  /* Make sure bar doesn't overflow */
   #bar{padding:0 10px;gap:7px;}
   #br{gap:5px;}
+  /* View All mobile adjustments */
+  .va-head{padding:0 16px;height:60px;}
+  .va-head-title{font-size:17px;}
+  .va-controls{padding:10px 12px;gap:8px;}
+  .va-country-filter{flex-direction:column;gap:6px;}
+  .va-csel{width:100%;}
+  /* Modal mobile */
+  #amodal{border-radius:20px;}
+  .am-photo{width:110px;height:110px;font-size:36px;}
+  .am-name{font-size:19px;}
 }
 @media(min-width:768px){
   #mob{display:none!important;}
   #btn-srch{display:none!important;}
 }
 
-.leaflet-interactive {
-  pointer-events: auto !important;
-}
+.leaflet-interactive{pointer-events:auto!important;}
 </style>
 </head>
 <body>
 
-<!-- LOADER — z-index 9000, hides only after map fully renders -->
+<!-- LOADER -->
 <div id="ldr">
   <div class="ldr-logo">VIT Stars Scheme</div>
   <div class="spin"></div>
@@ -504,32 +727,34 @@ table.tb tbody tr:hover td{background:var(--acbg);}
 
 <!-- FLIGHT ANIMATION SCREEN -->
 <div id="flight-screen">
-  <div id="fhero">
-    <img id="fhero-img"
-      src="https://raw.githubusercontent.com/vit-stars/data/main/photos/vit.jpg"
-      alt="VIT Campus Vellore"/>
-    <div class="fhero-badge">
-      <div class="fhero-logo">VIT</div>
-      <div class="fhero-title">VIT Stars Scheme<br><em>Global Alumni</em></div>
-      <div class="fhero-sub">Excellence taking flight — from Vellore to the World</div>
-      <div class="fhero-loc">📍 Vellore Institute of Technology · Tamil Nadu, India</div>
+  <div id="fmap-wrap">
+    <div id="fhero">
+      <img id="fhero-img"
+        src="https://raw.githubusercontent.com/vit-stars/data/main/photos/vit.jpg"
+        alt="VIT Campus Vellore"/>
+      <div class="fhero-badge">
+        <div class="fhero-logo"><img src="https://raw.githubusercontent.com/vit-stars/data/main/photos/logo.png" style="height:34px;width:auto;object-fit:contain;" alt="VIT"/></div>
+        <div class="fhero-title">VIT Stars Scheme<br><em>Global Alumni</em></div>
+        <div class="fhero-sub">Excellence taking flight — from Vellore to the World</div>
+        <div class="fhero-loc">📍 Vellore Institute of Technology · Tamil Nadu, India</div>
+      </div>
     </div>
-  </div>
-  <div id="fmap"></div>
-  <svg id="farc" xmlns="http://www.w3.org/2000/svg"></svg>
-  <div id="fui">
-    <div id="ftitle">✈ <em>Taking Flight</em> — VIT Alumni Abroad</div>
-    <div id="fsub">From Vellore to the World</div>
-    <div id="fcount"></div>
-    <div id="fprog"><div id="fprog-bar"></div></div>
-    <button id="fskip" onclick="skipFlight()">Skip →</button>
+    <div id="fmap"></div>
+    <svg id="farc" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="fui">
+      <div id="ftitle">✈ <em>Taking Flight</em> — VIT Alumni Abroad</div>
+      <div id="fsub">From Vellore to the World</div>
+      <div id="fcount"></div>
+      <div id="fprog"><div id="fprog-bar"></div></div>
+      <button id="fskip" onclick="skipFlight()">Skip →</button>
+    </div>
   </div>
 </div>
 
 <!-- TOPBAR -->
 <div id="bar">
   <a class="logo" href="#">
-    <div class="logo-gem">VIT</div>
+    <div class="logo-gem"><img src="https://raw.githubusercontent.com/vit-stars/data/main/photos/logo.png" style="height:34px;width:auto;object-fit:contain;" alt="VIT"/></div>
     <div class="logo-words">
       <span class="logo-name">VIT Stars Scheme</span>
       <span class="logo-tag">Alumni Abroad</span>
@@ -578,10 +803,18 @@ table.tb tbody tr:hover td{background:var(--acbg);}
 <div id="mw">
   <div id="map"></div>
 
+  <!-- Live chip -->
+  <div id="live-chip" style="display:none;">
+    <div class="chip-dot"></div>
+    <span id="chip-n" class="chip-num">0</span>
+    <span>alumni in</span>
+    <span id="chip-c" class="chip-num">0</span>
+    <span>countries</span>
+  </div>
+
   <!-- Map mode toggle -->
   <div id="map-mode">
     <button class="mm-btn act" data-mode="normal" onclick="setMapMode('normal',this)">🗺 <span class="mm-txt">Normal</span></button>
-    <button class="mm-btn" data-mode="terrain" onclick="setMapMode('terrain',this)">🏔 <span class="mm-txt">Terrain</span></button>
     <button class="mm-btn" data-mode="satellite" onclick="setMapMode('satellite',this)">🛰 <span class="mm-txt">Satellite</span></button>
   </div>
   <!-- Density scale legend -->
@@ -676,14 +909,58 @@ table.tb tbody tr:hover td{background:var(--acbg);}
   </div>
 </div>
 
-<!-- ALUMNI DETAIL MODAL -->
+<!-- VIEW ALL FULL PAGE PANEL -->
+<div id="va-overlay" onclick="closeAllAlumni()"></div>
+<div id="va-panel">
+  <div class="va-head">
+    <span class="va-head-icon">🌍</span>
+    <div>
+      <div class="va-head-title">All Alumni</div>
+      <div class="va-head-sub" id="va-head-sub">Loading…</div>
+    </div>
+    <button onclick="resetVA()" style="margin-left:auto;padding:6px 14px;border-radius:20px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--fb);flex-shrink:0;white-space:nowrap;">↺ Reset</button>
+    <button class="va-head-close" onclick="closeAllAlumni()">✕</button>
+  </div>
+  <div class="va-stats">
+    <div class="va-stat"><div class="va-sv" id="va-st-t" style="color:var(--ac)">0</div><div class="va-sl">Total</div></div>
+    <div class="va-stat"><div class="va-sv" id="va-st-s" style="color:#34a853">0</div><div class="va-sl">Shown</div></div>
+    <div class="va-stat"><div class="va-sv" id="va-st-m" style="color:var(--ac)">0</div><div class="va-sl">Male</div></div>
+    <div class="va-stat"><div class="va-sv" id="va-st-f" style="color:var(--red)">0</div><div class="va-sl">Female</div></div>
+    <div class="va-stat"><div class="va-sv" id="va-st-c" style="color:#34a853">0</div><div class="va-sl">Countries</div></div>
+  </div>
+  <div class="va-controls">
+    <div class="va-search-wrap">
+      <span class="va-si">🔍</span>
+      <input id="va-search" type="text" placeholder="Search name, company, role…" oninput="renderVA()"/>
+    </div>
+    <div class="va-country-filter">
+      <select id="va-country" class="va-csel" onchange="renderVA()">
+        <option value="all">🌍 All Countries</option>
+      </select>
+      <div class="va-gender-btns">
+        <button class="va-gbtn on" onclick="setVAGender(this,'all')">All</button>
+        <button class="va-gbtn" onclick="setVAGender(this,'M')">♂ Male</button>
+        <button class="va-gbtn" onclick="setVAGender(this,'F')">♀ Female</button>
+      </div>
+    </div>
+  </div>
+  <div class="va-body">
+    <div class="va-grid" id="va-grid"></div>
+  </div>
+</div>
+
+<!-- ALUMNI DETAIL MODAL — redesigned -->
 <div id="amodal-bg" onclick="if(event.target===this)closeAlumniModal()">
   <div id="amodal">
     <div class="am-head">
+      <div class="am-head-bg"></div>
       <button class="am-close" onclick="closeAlumniModal()">✕</button>
-      <div class="am-photo" id="am-photo"></div>
-      <div class="am-name" id="am-name">—</div>
-      <div class="am-role" id="am-role">—</div>
+      <div class="am-photo-wrap">
+        <div class="am-photo" id="am-photo"></div>
+        <div class="am-name" id="am-name">—</div>
+        <div class="am-role" id="am-role">—</div>
+        <div class="am-tags" id="am-tags"></div>
+      </div>
     </div>
     <div class="am-body" id="am-body"></div>
   </div>
@@ -698,11 +975,11 @@ function ec(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").r
 function isDark(){return document.documentElement.getAttribute("data-theme")==="dark";}
 function mapMode(){return document.documentElement.getAttribute("data-mapmode")||"normal";}
 
-/* ══ 5-COLOR PALETTE for Normal mode (non-density) ══════════ */
+/* ══ 5-COLOR PALETTE ══════════════════════════════════════════ */
 var PAL_NORMAL_LIGHT=["#1e8449","#c0392b","#1a5276","#7d6608","#6c3483"];
 var PAL_NORMAL_DARK =["#2ecc71","#e74c3c","#3498db","#f1c40f","#9b59b6"];
 var PAL_ARC=["#ff6b6b","#48dbfb","#ffd32a","#0be881","#f8a5c2"];
-var COUNTRY_PAL_IDX={}; /* assigned in initApp */
+var COUNTRY_PAL_IDX={};
 
 function assignCountryColors(){
   var seen={};
@@ -710,43 +987,25 @@ function assignCountryColors(){
   var list=Object.keys(seen).sort();
   list.forEach(function(cn,i){COUNTRY_PAL_IDX[cn]=i%5;});
 }
-
 function getCountryColor(cn){
-  /* Normal mode: fixed 5-color palette per country */
   if(mapMode()==="normal"){
     var idx=COUNTRY_PAL_IDX[cn];
     if(idx===undefined)return null;
     return isDark()?PAL_NORMAL_DARK[idx]:PAL_NORMAL_LIGHT[idx];
   }
-  /* Terrain/Satellite: density-based */
   return getDensityColor(countryTotal(cn));
 }
-
 function getArcColor(cn){
   var idx=COUNTRY_PAL_IDX[cn];
   if(idx===undefined)idx=0;
   return PAL_ARC[idx%PAL_ARC.length];
 }
 
-/* ══ DENSITY-BASED COLOURS (used for Terrain/Satellite modes) ══
-   Light Normal: green scale (Google Maps style)
-   Light Terrain: brown/amber earthtone scale
-   Light Satellite: bright neon on dark
-   Dark: vivid green scale (as requested)
-*/
 var DENSITY_SCALES={
-  /* Light Normal: Google Maps green scale */
   "normal-light" :["#a5d6a7","#66bb6a","#43a047","#2e7d32","#1b5e20"],
-  /* Dark Normal: bright neon green scale — clearly visible on dark land */
   "normal-dark"  :["#69f0ae","#00e676","#00c853","#00a152","#007b3a"],
-  /* Light Terrain: warm amber/brown */
-  "terrain-light":["#ffe0b2","#ffb74d","#fb8c00","#e65100","#bf360c"],
-  /* Dark Terrain: vivid orange-amber on dark */
-  "terrain-dark" :["#ffcc80","#ffa726","#fb8c00","#ef6c00","#e65100"],
-  /* Light Satellite: bright teal/cyan */
-  "satellite-light":["#b2dfdb","#4db6ac","#009688","#00796b","#004d40"],
-  /* Dark Satellite: electric cyan on dark */
-  "satellite-dark" :["#84ffff","#18ffff","#00e5ff","#00b8d4","#0097a7"]
+"satellite-light":["#fff176","#ffca28","#ff8f00","#e65100","#bf360c"],
+"satellite-dark" :["#fff9c4","#fff176","#ffca28","#ff8f00","#e65100"]
 };
 var DENSITY_LABELS=["1–2","3–5","6–10","11–20","21+"];
 var DENSITY_THRESHOLDS=[2,5,10,20,Infinity];
@@ -775,163 +1034,68 @@ function buildScaleLegend(){
   document.getElementById("scale-items").innerHTML=html;
 }
 
+/* ══ SATELLITE TILE LAYERS ════════════════════════════════════
+   Uses ESRI World Imagery (free, no API key needed).
+   To change initial map center/zoom: find initMap() below.
+   Change center:[lat,lng] e.g. center:[20,80] for India-centered
+   Change zoom:2.4 — higher = more zoomed in, lower = more zoomed out
+   Good presets:
+     India-centered:  center:[20,80], zoom:2.8
+     Europe-centered: center:[48,10], zoom:3.2
+     World overview:  center:[20,20], zoom:2.4  ← current
+*/
+var satelliteTileLayer=null;
+
+function setSatelliteTile(on){
+  if(on){
+    if(!satelliteTileLayer){
+      /* ESRI World Imagery — real satellite, no API key */
+      satelliteTileLayer=L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        {attribution:'',maxZoom:18,opacity:0.95}
+      );
+    }
+    if(map&&!map.hasLayer(satelliteTileLayer)){
+      satelliteTileLayer.addTo(map);
+      satelliteTileLayer.bringToBack();
+      /* Push ocean rect below tile layer */
+      if(oceanRect)oceanRect.setStyle({fillOpacity:0,opacity:0});
+    }
+  } else {
+    if(satelliteTileLayer&&map&&map.hasLayer(satelliteTileLayer)){
+      map.removeLayer(satelliteTileLayer);
+    }
+    if(oceanRect){
+      var theme=isDark()?"dark":"light";
+      var oceanCols={"normal-light":"#93c9e3","normal-dark":"#0a1e2e"};
+      oceanRect.setStyle({fillColor:oceanCols["normal"+"-"+theme]||"#93c9e3",fillOpacity:1,opacity:1});
+    }
+  }
+}
+
 function setMapMode(mode,btn){
   document.documentElement.setAttribute("data-mapmode",mode);
   document.querySelectorAll(".mm-btn").forEach(function(b){b.classList.remove("act");});
   btn.classList.add("act");
+  /* Satellite tile */
+  setSatelliteTile(mode==="satellite");
   var theme=isDark()?"dark":"light";
   var oceanCols={
-    "normal-light":"#aadaff","normal-dark":"#0e2a45",
-    "terrain-light":"#93c9e3","terrain-dark":"#0a1e2e",
-    "satellite-light":"#1a3550","satellite-dark":"#060e18"
+    "normal-light":"#93c9e3","normal-dark":"#0a1e2e",
+    "satellite-light":"#0d1b2a","satellite-dark":"#060e18"
   };
-  if(oceanRect)oceanRect.setStyle({fillColor:oceanCols[mode+"-"+theme]||"#aadaff"});
+  if(mode!=="satellite"&&oceanRect)oceanRect.setStyle({fillColor:oceanCols[mode+"-"+theme]||"#93c9e3",fillOpacity:1,opacity:1});
   if(gjL)gjL.setStyle(cStyle);
   buildScaleLegend();
-  /* Scale legend only relevant for density modes */
   document.getElementById("scale-leg").style.display=(mode==="normal")?"none":"block";
-}
-
-/* ══ COUNTRY CENTRES ══════════════════════════════════════════ */
-var CENT={
-  "United States of America":[38,-97],"Germany":[51,10],"Singapore":[1.35,103.82],
-  "UAE":[24.47,54.37],"Saudi Arabia":[24,45],"United Kingdom":[54,-2],
-  "Canada":[57,-96],"Australia":[-25,135],"Japan":[36.5,138],
-  "France":[46.5,2],"Netherlands":[52.3,5.3],"Sweden":[62,17],
-  "Switzerland":[47,8.3],"Qatar":[25.3,51.2],"Taiwan":[23.7,121],
-  "Oman":[22,57.5],"India":[22,79],"China":[35,105],
-  "South Korea":[37,127.5],"Brazil":[-10,-53],"Russia":[62,94],
-  "South Africa":[-29,25],"Norway":[65,14],"Denmark":[56,9.5],
-  "Finland":[64,26],"Belgium":[50.5,4.5],"Austria":[47.5,14.5],
-  "Spain":[40,-4],"New Zealand":[-41,174],"Ireland":[53.5,-8],
-  "Poland":[52,20],"Turkey":[39,35],"Greece":[39.5,22],
-  "Malaysia":[4,109],"Indonesia":[-2,118],"Thailand":[15,101],
-  "Philippines":[13,122],"Vietnam":[16,107],"Egypt":[27,30],
-  "Pakistan":[30,70],"Sri Lanka":[7.9,80.7],"Romania":[46,25],
-  "Hungary":[47,19],"Czech Republic":[50,15.5],"Israel":[31.5,34.8],
-  "Jordan":[31,36],"Kuwait":[29.3,47.7],"Bahrain":[26,50.5],"Portugal":[39.5,-8],
-  "Italy":[41.9,12.5]
-};
-
-/* Specific city coords for pin markers */
-var CITY_COORDS={
-  "California, USA":[36.7,-119.4],"Seattle, USA":[47.6,-122.3],
-  "Texas, USA":[31.9,-99.9],"New Jersey, USA":[40.1,-74.7],
-  "Washington, USA":[47.5,-120.5],"Dubai, UAE":[25.2,55.27],
-  "Abu Dhabi, UAE":[24.45,54.37],"Sharjah, UAE":[25.35,55.42],
-  "Hannover, Germany":[52.37,9.73],"Stuttgart, Germany":[48.78,9.18],
-  "Berlin, Germany":[52.52,13.4],"Riyadh, Saudi Arabia":[24.68,46.72],
-  "Dammam, Saudi Arabia":[26.43,50.1],"Singapore":[1.35,103.82],
-  "London, UK":[51.5,-0.12],"Sydney, Australia":[-33.8,151.2],
-  "Melbourne, Australia":[-37.8,144.96],"Taipei, Taiwan":[25.03,121.56],
-  "Stockholm, Sweden":[59.33,18.06],"Eindhoven, Netherlands":[51.44,5.47],
-  "Tokyo, Japan":[35.68,139.69],"Doha, Qatar":[25.28,51.53],
-  "Muscat, Oman":[23.58,58.4],"Zurich, Switzerland":[47.37,8.54],
-  "Toronto, Canada":[43.65,-79.38],"Vancouver, Canada":[49.25,-123.1],
-  "Rome, Italy":[41.9,12.5]
-};
-
-var VIT=[12.97,79.15];
-
-/* ══ DATA ════════════════════════════════════════════════════ */
-var ALUMNI=[];
-/* ── PASTE YOUR GITHUB CONFIG HERE ── */
-var CONFIG={
-  GH_USER:"YOUR_GITHUB_USERNAME",
-  GH_REPO:"vit-alumni-data",
-  GH_TOKEN:"YOUR_READ_ONLY_TOKEN_HERE"
-};
-function loadData(){
-  if(isDataLoaded)return;
-  isDataLoaded=true;
-
-  /* ── If no real token configured, use sample data immediately ── */
-
-  /* ── Fetch from your GitHub repo ── */
-  fetch(
-    "https://raw.githubusercontent.com/vit-stars/data/main/abroad_alumni.json"
-  )
-  .then(function(r){
-    if(!r.ok)throw new Error("HTTP "+r.status);
-    return r.json();
-  })
-  .then(function(d){
-    var all=d;
-    ALUMNI=all
-      .filter(function(s){return s.country && s.country!=="";})
-      .map(function(s){return{
-        name:s.name||"",
-        gender:s.gender||"M",
-        district:s.district||"",
-        company:s.company||"",
-        designation:s.designation||"",
-        location:s.location||"",
-        country:s.country||"",
-        batch:s.batch||"",
-        photo:s.photo||""
-      };});
-    initApp();
-  })
-  .catch(function(err){
-    console.warn("GitHub fetch failed, using sample data:",err);
-    initApp();
-  });
-}
-function setLdr(msg){var el=document.getElementById("ldr-msg");if(el)el.textContent=msg;}
-
-function hideLdr(){
-  var l=document.getElementById("ldr");
-  if(!l||l.style.display==="none")return;
-  l.classList.add("hide");
-  setTimeout(function(){l.style.display="none";},600);
-}
-
-/* Safety net — force hide loader after 12s if something goes wrong */
-setTimeout(function(){hideLdr();},12000);
-
-function sample(){
-  return[
-    {name:"Arjun Krishnamurthy",gender:"M",district:"Vellore",company:"Google",designation:"Software Engineer",location:"California, USA",country:"United States",batch:"2008",photo:""},
-    {name:"Priya Sharma",gender:"F",district:"Chennai",company:"Microsoft",designation:"Product Manager",location:"Seattle, USA",country:"United States",batch:"2010",photo:""},
-    {name:"Ravi Subramanian",gender:"M",district:"Coimbatore",company:"Amazon",designation:"SDE II",location:"New Jersey, USA",country:"United States",batch:"2009",photo:""},
-    {name:"Anitha Rajan",gender:"F",district:"Salem",company:"Apple",designation:"UX Engineer",location:"California, USA",country:"United States",batch:"2012",photo:""},
-    {name:"Karthik Balaji",gender:"M",district:"Madurai",company:"Meta",designation:"Data Scientist",location:"Texas, USA",country:"United States",batch:"2011",photo:""},
-    {name:"Deepa Nair",gender:"F",district:"Trichy",company:"IBM",designation:"Cloud Architect",location:"Washington, USA",country:"United States",batch:"2013",photo:""},
-    {name:"Siva Prakash",gender:"M",district:"Vellore",company:"Siemens",designation:"Project Engineer",location:"Hannover, Germany",country:"Germany",batch:"2008",photo:""},
-    {name:"Ananya Krishnan",gender:"F",district:"Erode",company:"SAP",designation:"Business Analyst",location:"Berlin, Germany",country:"Germany",batch:"2014",photo:""},
-    {name:"Sathish Babu",gender:"M",district:"Tirunelveli",company:"Bosch",designation:"Embedded Engineer",location:"Stuttgart, Germany",country:"Germany",batch:"2010",photo:""},
-    {name:"Bharath Selvan",gender:"M",district:"Thanjavur",company:"Grab",designation:"Backend Engineer",location:"Singapore",country:"Singapore",batch:"2010",photo:""},
-    {name:"Hema Sundaram",gender:"F",district:"Vellore",company:"DBS Bank",designation:"Data Analyst",location:"Singapore",country:"Singapore",batch:"2012",photo:""},
-    {name:"Prakash Venkatesh",gender:"M",district:"Kancheepuram",company:"Accenture",designation:"Tech Lead",location:"Singapore",country:"Singapore",batch:"2009",photo:""},
-    {name:"Dinesh Raj",gender:"M",district:"Cuddalore",company:"ADNOC",designation:"Petroleum Engineer",location:"Abu Dhabi, UAE",country:"UAE",batch:"2008",photo:""},
-    {name:"Nivetha Kumar",gender:"F",district:"Nagapattinam",company:"Etisalat",designation:"Network Engineer",location:"Dubai, UAE",country:"UAE",batch:"2011",photo:""},
-    {name:"Sugumar T",gender:"M",district:"Vellore",company:"Emaar",designation:"IT Manager",location:"Dubai, UAE",country:"UAE",batch:"2013",photo:""},
-    {name:"Vasanth Kumar",gender:"M",district:"Tiruvannamalai",company:"Emaar",designation:"DevOps Engineer",location:"Sharjah, UAE",country:"UAE",batch:"2009",photo:""},
-    {name:"Ramesh Balaguru",gender:"M",district:"Dharmapuri",company:"Aramco",designation:"Control Engineer",location:"Riyadh, Saudi Arabia",country:"Saudi Arabia",batch:"2015",photo:""},
-    {name:"Jeeva K",gender:"M",district:"Krishnagiri",company:"SABIC",designation:"Process Engineer",location:"Riyadh, Saudi Arabia",country:"Saudi Arabia",batch:"2012",photo:""},
-    {name:"Ganesh Murthy",gender:"M",district:"Chennai",company:"Arup",designation:"Civil Engineer",location:"London, UK",country:"United Kingdom",batch:"2010",photo:""},
-    {name:"Sangeetha Raj",gender:"F",district:"Vellore",company:"Deloitte",designation:"Tech Consultant",location:"London, UK",country:"United Kingdom",batch:"2012",photo:""},
-    {name:"Bala Subramanian",gender:"M",district:"Tirupur",company:"Barclays",designation:"Data Engineer",location:"London, UK",country:"United Kingdom",batch:"2008",photo:""},
-    {name:"Rajesh Chandrasekaran",gender:"M",district:"Coimbatore",company:"Shopify",designation:"Engineering Manager",location:"Toronto, Canada",country:"Canada",batch:"2008",photo:""},
-    {name:"Meena Iyer",gender:"F",district:"Trichy",company:"RBC",designation:"Software Developer",location:"Vancouver, Canada",country:"Canada",batch:"2014",photo:""},
-    {name:"Vinoth Kumar",gender:"M",district:"Salem",company:"Manulife",designation:"Cloud Architect",location:"Toronto, Canada",country:"Canada",batch:"2011",photo:""},
-    {name:"Senthil Nathan",gender:"M",district:"Madurai",company:"Atlassian",designation:"Senior Engineer",location:"Sydney, Australia",country:"Australia",batch:"2011",photo:""},
-    {name:"Vijayalakshmi T",gender:"F",district:"Chennai",company:"CBA",designation:"Data Scientist",location:"Melbourne, Australia",country:"Australia",batch:"2010",photo:""},
-    {name:"Muthukumar V",gender:"M",district:"Vellore",company:"ASML",designation:"Software Engineer",location:"Eindhoven, Netherlands",country:"Netherlands",batch:"2009",photo:""},
-    {name:"Aarthi Dhanasekaran",gender:"F",district:"Erode",company:"Ericsson",designation:"RF Engineer",location:"Stockholm, Sweden",country:"Sweden",batch:"2013",photo:""},
-    {name:"Gokulakrishnan S",gender:"M",district:"Namakkal",company:"Toyota",designation:"Automotive Engineer",location:"Tokyo, Japan",country:"Japan",batch:"2010",photo:""},
-    {name:"Ramya Srinivasan",gender:"F",district:"Tirunelveli",company:"Sony",designation:"Hardware Engineer",location:"Tokyo, Japan",country:"Japan",batch:"2015",photo:""},
-    {name:"Pradeep Natarajan",gender:"M",district:"Vellore",company:"Qatar Rail",designation:"Project Manager",location:"Doha, Qatar",country:"Qatar",batch:"2012",photo:""},
-    {name:"Anbu Selvi",gender:"F",district:"Dharmapuri",company:"Ooredoo",designation:"Business Analyst",location:"Doha, Qatar",country:"Qatar",batch:"2014",photo:""},
-    {name:"Vasanth Rajan",gender:"M",district:"Chennai",company:"MediaTek",designation:"IC Designer",location:"Taipei, Taiwan",country:"Taiwan",batch:"2013",photo:""},
-    {name:"Pavithra M",gender:"F",district:"Vellore",company:"Muscat Municipality",designation:"IT Analyst",location:"Muscat, Oman",country:"Oman",batch:"2016",photo:""},
-    {name:"Selvaraj P",gender:"M",district:"Salem",company:"Zurich Insurance",designation:"Data Engineer",location:"Zurich, Switzerland",country:"Switzerland",batch:"2011",photo:""}
-  ];
+  /* Rebuild mobile badges */
+  if(window.innerWidth<768)addMobileCountryBadges();
 }
 
 /* ══ FILTER STATE ═════════════════════════════════════════════ */
 var pgf={d:"all",m:"all"},curC=null,fpO=false;
-var ALUMNI_COUNTRIES=[]; /* countries that actually have alumni — computed once */
+var ALUMNI_COUNTRIES=[];
+var vaGender="all";
 
 function getFiltered(){
   var b=document.getElementById("sel-batch").value;
@@ -963,6 +1127,7 @@ function applyF(){
   var b=document.getElementById("fbg");b.textContent=n;b.className="fbg"+(n>0?" on":"");
   document.getElementById("btn-f").classList.toggle("act",n>0);
   if(curC){if(window.innerWidth>=768)renderP();else renderM();}
+  if(window.innerWidth<768)addMobileCountryBadges();
 }
 function resetAll(){
   ["sel-batch","sel-gender","sel-co","sel-des"].forEach(function(id){document.getElementById(id).value="all";});
@@ -973,15 +1138,61 @@ function resetAll(){
 function toggleFP(){fpO=!fpO;document.getElementById("fp").classList.toggle("open",fpO);document.getElementById("fp-overlay").classList.toggle("on",fpO);document.getElementById("btn-f").classList.toggle("act",fpO||nAct()>0);}
 function closeFP(){fpO=false;document.getElementById("fp").classList.remove("open");document.getElementById("fp-overlay").classList.remove("on");if(nAct()===0)document.getElementById("btn-f").classList.remove("act");}
 function updStats(arr){
-  var m=arr.filter(function(a){return a.gender==="M";}).length;
-  var f=arr.filter(function(a){return a.gender==="F";}).length;
-  var cc=new Set(arr.map(function(a){return a.country;}));
-  document.getElementById("st-t").textContent=arr.length;
+  /* FIX: Count only NON-India alumni for countries stat (India is the origin country) */
+  var abroad=arr.filter(function(a){return a.country&&a.country!=="India";});
+  var m=abroad.filter(function(a){return a.gender==="M";}).length;
+  var f=abroad.filter(function(a){return a.gender==="F";}).length;
+  var cc=new Set(abroad.map(function(a){return a.country;}));
+  document.getElementById("st-t").textContent=abroad.length;
   document.getElementById("st-m").textContent=m;
   document.getElementById("st-f").textContent=f;
   document.getElementById("st-c").textContent=cc.size;
   var cn=document.getElementById("chip-n"),cc2=document.getElementById("chip-c");
-  if(cn)cn.textContent=arr.length;if(cc2)cc2.textContent=cc.size;
+  if(cn)cn.textContent=abroad.length;if(cc2)cc2.textContent=cc.size;
+}
+
+/* ══ MOBILE COUNTRY COUNT BADGES ════════════════════════════
+   Shows alumni count on each coloured country on mobile
+   (since there's no hover). Only appears on mobile width.
+*/
+var mobBadgeLayer=null;
+function addMobileCountryBadges(){
+  if(!map)return;
+  /* remove old */
+  document.querySelectorAll(".mob-country-badge").forEach(function(el){el.remove();});
+  if(window.innerWidth>=768)return;
+
+  ALUMNI_COUNTRIES.forEach(function(cn){
+    var center=CENT[cn];
+    if(!center)return;
+    /* During filter: skip countries with 0 filtered alumni */
+    var filtCnt=nAct()>0?countryFiltered(cn):countryTotal(cn);
+    if(filtCnt===0)return;
+    try {
+      var pt=map.latLngToContainerPoint([center[0],center[1]]);
+      var mapEl=document.getElementById("mw");
+      var badge=document.createElement("div");
+      badge.className="mob-country-badge";
+      badge.style.left=pt.x+"px";
+      badge.style.top=pt.y+"px";
+      /* Country name row */
+      var nameEl=document.createElement("div");
+      nameEl.className="mob-country-badge-name";
+      nameEl.textContent=cn;
+      /* Count row */
+      var countEl=document.createElement("div");
+      countEl.className="mob-country-badge-count";
+      countEl.textContent=filtCnt;
+      badge.appendChild(nameEl);
+      badge.appendChild(countEl);
+      badge.style.pointerEvents="auto";
+      badge.style.cursor="pointer";
+      badge.onclick=function(){openC(cn);};
+      mapEl.appendChild(badge);
+    } catch(e){
+      console.error("Badge creation failed:",e);
+    }
+  });
 }
 
 /* ══ SEARCH ═════════════════════════════════════════════════ */
@@ -1005,23 +1216,31 @@ function onGS(){
     var col=getDensityColor(cnt)||"#aaa";
     var ini=a.name.split(" ").map(function(w){return w[0]||"";}).slice(0,2).join("");
     var ph=a.photo?'<img src="'+ec(a.photo)+'" alt=""/>':'<span>'+ec(ini)+'</span>';
-    html+='<div class="sdr" onclick="srClick(\''+ec(a.country)+'\','+JSON.stringify(a).replace(/'/g,"&#39;")+')">'
+    var dataStr=JSON.stringify(a).replace(/'/g,"&#39;");
+    /* FIX: Search click opens person detail directly */
+    html+='<div class="sdr" onclick="srClickPerson('+dataStr+')">'
       +'<div class="sdp '+(a.gender==="M"?"m":"f")+'">'+ph+'</div>'
       +'<div style="flex:1;min-width:0;"><div class="sdn">'+ec(a.name)+'</div>'
       +'<div class="sdm"><span class="sdc-dot" style="background:'+col+'"></span>'
       +gf(a.country)+' <b style="color:var(--t1)">'+ec(a.country)+'</b>'
-      +' · '+ec(a.location||"")+'</div></div>'
-      +'<span style="font-size:10px;color:var(--t3)">'+ec(a.designation||"")+'</span></div>';
+      +' · '+ec(a.location||"")+'</div>'
+      +(a.designation?'<div style="font-size:10px;color:var(--t3);margin-top:1px;">'+ec(a.designation||"")+(a.company?' @ '+ec(a.company):"")+'</div>':'')
+      +'</div>'
+      +'<span class="sdr-arrow">→</span></div>';
   });
   dr.innerHTML=html;dr.className="on";
 }
-function srClick(cn,alumni){clearGS();closeMobSearch();openC(cn);}
+/* FIX: clicking search result opens person detail modal directly */
+function srClickPerson(alumni){
+  clearGS();closeMobSearch();
+  openAlumniModalDirect(alumni);
+}
 function clearGS(){document.getElementById("gs").value="";document.getElementById("gx").className="";document.getElementById("sd").className="";}
 function openMobSearch(){document.getElementById("sw").classList.add("sw-open");setTimeout(function(){document.getElementById("gs").focus();},80);}
 function closeMobSearch(){clearGS();document.getElementById("sw").classList.remove("sw-open");}
 document.addEventListener("click",function(e){if(!e.target.closest("#sw")&&!e.target.closest("#btn-srch"))document.getElementById("sd").className="";});
 document.addEventListener("keydown",function(e){
-  if(e.key==="Escape"){clearGS();closeMobSearch();if(fpO)closeFP();closeAlumniModal();}
+  if(e.key==="Escape"){clearGS();closeMobSearch();if(fpO)closeFP();closeAlumniModal();closeAllAlumni();}
 });
 document.addEventListener("click",function(e){
   if(window.innerWidth<768)return;
@@ -1030,44 +1249,63 @@ document.addEventListener("click",function(e){
     &&!e.target.closest("#panel")
     &&!e.target.closest("#map")
     &&!e.target.closest("#sw")
-    &&!e.target.closest("#btn-viewall"))closePanel();
+    &&!e.target.closest("#btn-viewall")
+    &&!e.target.closest("#va-panel"))closePanel();
 });
 
-/* ══ VIEW ALL ALUMNI ══════════════════════════════════════════ */
+/* ══ VIEW ALL — Full Page Panel ══════════════════════════════ */
 function openAllAlumni(){
-  curC="__ALL__";
-  refLayers();
-  if(window.innerWidth>=768){
-    /* Desktop — use the existing panel */
-    document.getElementById("p-flag").textContent="🌍";
-    document.getElementById("p-name").textContent="All Alumni";
-    document.getElementById("pnemp").style.display="none";
-    document.getElementById("pcon").style.display="flex";
-    document.getElementById("panel").classList.add("open");
-    document.getElementById("panel-overlay").style.display="block";
-    document.body.classList.add("panel-open");
-    document.getElementById("pin").value="";
-    pgf.d="all";
-    document.querySelectorAll("#pgf-d .pgc").forEach(function(c,i){c.className="pgc"+(i===0?" on":"");});
-    renderAllP();
-    setTimeout(function(){if(map)map.invalidateSize();},330);
-  } else {
-    /* Mobile */
-    document.getElementById("m-flag").textContent="🌍";
-    document.getElementById("m-name").textContent="All Alumni";
-    document.getElementById("min").value="";
-    pgf.m="all";
-    document.querySelectorAll("#pgf-m .pgc").forEach(function(c,i){c.className="pgc"+(i===0?" on":"");});
-    document.getElementById("mob").classList.add("on");
-    renderAllM();
-  }
+  buildVACountryFilter();
+  document.getElementById("va-search").value="";
+  vaGender="all";
+  document.querySelectorAll(".va-gbtn").forEach(function(b,i){b.className="va-gbtn"+(i===0?" on":"");});
+  document.getElementById("va-country").value="all";
+  renderVA();
+  document.getElementById("va-panel").classList.add("on");
+  document.getElementById("va-overlay").classList.add("on");
+}
+function closeAllAlumni(){
+  document.getElementById("va-panel").classList.remove("on");
+  document.getElementById("va-overlay").classList.remove("on");
+}
+function resetVA(){
+  document.getElementById("va-search").value="";
+  vaGender="all";
+  document.querySelectorAll(".va-gbtn").forEach(function(b,i){b.className="va-gbtn"+(i===0?" on":"");});
+  document.getElementById("va-country").value="all";
+  renderVA();
 }
 
-function getAllRows(sid,px){
-  var q=(document.getElementById(sid).value||"").toLowerCase();
+function buildVACountryFilter(){
+  var sel=document.getElementById("va-country");
+  /* Clear existing options except first */
+  while(sel.options.length>1)sel.remove(1);
+  var filtered=getFiltered();
+  ALUMNI_COUNTRIES.forEach(function(cn){
+    var cnt=filtered.filter(function(a){return a.country===cn;}).length;
+    var total=ALUMNI.filter(function(a){return a.country===cn;}).length;
+    var o=document.createElement("option");
+    o.value=cn;
+    o.textContent=gf(cn)+" "+cn+" ("+cnt+")";
+    if(cnt===0){o.disabled=true;o.textContent=gf(cn)+" "+cn+" — no match";}
+    sel.appendChild(o);
+  });
+}
+
+function setVAGender(btn,val){
+  vaGender=val;
+  document.querySelectorAll(".va-gbtn").forEach(function(b){b.className="va-gbtn";});
+  btn.className="va-gbtn"+(val==="M"?" mon":val==="F"?" fon":" on");
+  renderVA();
+}
+
+function renderVA(){
+  var q=(document.getElementById("va-search").value||"").toLowerCase();
+  var cn=document.getElementById("va-country").value;
   var rows=getFiltered();
-  if(pgf[px]==="M")rows=rows.filter(function(a){return a.gender==="M";});
-  else if(pgf[px]==="F")rows=rows.filter(function(a){return a.gender==="F";});
+  if(cn!=="all")rows=rows.filter(function(a){return a.country===cn;});
+  if(vaGender==="M")rows=rows.filter(function(a){return a.gender==="M";});
+  else if(vaGender==="F")rows=rows.filter(function(a){return a.gender==="F";});
   if(q)rows=rows.filter(function(a){
     return a.name.toLowerCase().indexOf(q)>=0
       ||(a.company||"").toLowerCase().indexOf(q)>=0
@@ -1075,51 +1313,46 @@ function getAllRows(sid,px){
       ||(a.location||"").toLowerCase().indexOf(q)>=0
       ||(a.country||"").toLowerCase().indexOf(q)>=0;
   });
-  return rows;
-}
+  /* Update stats */
+  document.getElementById("va-st-t").textContent=ALUMNI.length;
+  document.getElementById("va-st-s").textContent=rows.length;
+  var m=rows.filter(function(a){return a.gender==="M";}).length;
+  var f=rows.filter(function(a){return a.gender==="F";}).length;
+  document.getElementById("va-st-m").textContent=m;
+  document.getElementById("va-st-f").textContent=f;
+  var cset=new Set(rows.map(function(a){return a.country;}));
+  document.getElementById("va-st-c").textContent=cset.size;
+  var sub=cn!=="all"?gf(cn)+" "+cn+" · "+rows.length+" alumni":"Showing "+rows.length+" of "+ALUMNI.length+" alumni";
+  document.getElementById("va-head-sub").textContent=sub;
 
-function buildAllTbl(rows,tbId,nrId,totId,shoId,mId,fId){
-  var m=getFiltered().filter(function(a){return a.gender==="M";}).length;
-  var f=getFiltered().filter(function(a){return a.gender==="F";}).length;
-  document.getElementById(totId).textContent=ALUMNI.length;
-  document.getElementById(shoId).textContent=rows.length;
-  document.getElementById(mId).textContent=m;
-  document.getElementById(fId).textContent=f;
-  var tb=document.getElementById(tbId),nr=document.getElementById(nrId);
-  if(!rows.length){tb.innerHTML="";nr.style.display="block";return;}
-  nr.style.display="none";
+  /* Render cards */
+  var grid=document.getElementById("va-grid");
+  if(!rows.length){
+    grid.innerHTML='<div class="va-nores">😔 No alumni match your filters.</div>';
+    return;
+  }
   var html="";
-  rows.forEach(function(a,i){
+  rows.forEach(function(a){
     var ini=a.name.split(" ").map(function(w){return w[0]||"";}).slice(0,2).join("");
+    var col=getCountryColor(a.country)||getDensityColor(countryTotal(a.country))||"#1a73e8";
     var ph=a.photo
-      ?'<div class="tdph"><img src="'+ec(a.photo)+'" alt=""/></div>'
-      :'<div class="tdph '+(a.gender==="M"?"tdm":"tdf")+'">'+ec(ini)+'</div>';
-    var dataStr=JSON.stringify(a).replace(/'/g,"&#39;");
-    var seenMore='<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--acbg2);color:var(--ac);font-size:11px;font-weight:700;">›</span>';
-    var genderBadge='<div class="tda '+(a.gender==="M"?"tdm":"tdf")+'" style="margin:0 auto;width:22px;height:22px;">'+ec(a.gender)+'</div>';
-    var batchBadge='<span class="tdbt" style="font-size:9.5px;padding:2px 5px;">'+ec(a.batch)+'</span>';
-    /* Same layout for both mobile and desktop — name+country in name col */
-    html+='<tr onclick="openAlumniModal(this)" data-alumni=\''+dataStr+'\'>'
-      +'<td style="text-align:center;color:var(--t3);font-size:9px;font-weight:700;">'+(i+1)+'</td>'
-      +'<td>'+ph+'</td>'
-      +'<td>'
-        +'<div style="font-weight:600;color:var(--t1);font-size:12px;white-space:normal;word-break:break-word;line-height:1.3;">'+ec(a.name)+'</div>'
-        +'<div style="font-size:10px;color:var(--t3);margin-top:1px;">'+gf(a.country)+' '+ec(a.country)+'</div>'
-        +(a.company?'<div style="font-size:10px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+ec(a.company)+'</div>':'')
-      +'</td>'
-      +'<td style="text-align:center;">'+genderBadge+'</td>'
-      +'<td style="text-align:center;">'+batchBadge+'</td>'
-      +'<td style="text-align:center;">'+seenMore+'</td>'
-      +'</tr>';
+      ?'<div class="va-card-photo"><img src="'+ec(a.photo)+'" alt=""/></div>'
+      :'<div class="va-card-photo '+(a.gender==="M"?"tdm":"tdf")+'" style="font-size:14px;font-weight:700;">'+ec(ini)+'</div>';
+    var dataStr=JSON.stringify(a).replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+    html+='<div class="va-card" onclick=\'openAlumniModalDirect('+JSON.stringify(a).replace(/'/g,"&#39;")+')\' >'
+      +ph
+      +'<div class="va-card-info">'
+        +'<div class="va-card-name">'+ec(a.name)+'</div>'
+        +'<div class="va-card-role">'+ec(a.designation||"")+(a.company?' @ '+ec(a.company):"")+'</div>'
+        +'<div class="va-card-loc">'+gf(a.country)+' '+ec(a.country)+(a.location?' · '+ec(a.location):"")+'</div>'
+        +'<div class="va-card-bottom">'
+          +'<span class="va-card-batch">'+ec(a.batch)+'</span>'
+          +'<span class="va-card-gender '+(a.gender==="M"?"tdm":"tdf")+'">'+ec(a.gender)+'</span>'
+        +'</div>'
+      +'</div>'
+      +'</div>';
   });
-  tb.innerHTML=html;
-}
-
-function renderAllP(){
-  buildAllTbl(getAllRows("pin","d"),"ptb","pnr","p-tot","p-sho","p-m","p-f");
-}
-function renderAllM(){
-  buildAllTbl(getAllRows("min","m"),"mtb","mnr","m-tot","m-sho","m-m","m-f");
+  grid.innerHTML=html;
 }
 
 /* ══ OPEN / CLOSE ════════════════════════════════════════════ */
@@ -1131,20 +1364,17 @@ function openPanel(cn){
   document.getElementById("pcon").style.display="flex";
   document.getElementById("panel").classList.add("open");
   document.getElementById("panel-overlay").style.display="block";
-  document.body.classList.add("panel-open");
   document.getElementById("pin").value="";pgf.d="all";
   document.querySelectorAll("#pgf-d .pgc").forEach(function(c,i){c.className="pgc"+(i===0?" on":"");});
   renderP();
-  setTimeout(function(){if(map)map.invalidateSize();},330);
 }
 function closePanel(){
   document.getElementById("panel").classList.remove("open");
   document.getElementById("panel-overlay").style.display="none";
-  document.body.classList.remove("panel-open");curC=null;
+  curC=null;
   document.getElementById("pcon").style.display="none";
   document.getElementById("pnemp").style.display="flex";
   refLayers();
-  setTimeout(function(){if(map)map.invalidateSize();},330);
 }
 function openM(cn){
   document.getElementById("m-flag").textContent=gf(cn);
@@ -1181,7 +1411,7 @@ function phHTML(a){
   return'<div class="tdph '+(a.gender==="M"?"tdm":"tdf")+'">'+ec(ini)+'</div>';
 }
 function buildTbl(rows,tbId,nrId,totId,shoId,mId,fId,cn){
-  var all=ALUMNI.filter(function(a){return a.country===cn;});
+  var all=cn?ALUMNI.filter(function(a){return a.country===cn;}):ALUMNI;
   var m=all.filter(function(a){return a.gender==="M";}).length;
   var f=all.filter(function(a){return a.gender==="F";}).length;
   document.getElementById(totId).textContent=all.length;
@@ -1193,12 +1423,12 @@ function buildTbl(rows,tbId,nrId,totId,shoId,mId,fId,cn){
   nr.style.display="none";
   var html="";
   rows.forEach(function(a,i){
-    var dataAttr="data-idx='"+i+"' data-cn='"+ec(cn)+"'";
+    var dataAttr="data-idx='"+i+"' data-cn='"+ec(cn||"")+"'";
     var ini=a.name.split(" ").map(function(w){return w[0]||"";}).slice(0,2).join("");
     var ph=a.photo?'<div class="tdph"><img src="'+ec(a.photo)+'" alt=""/></div>'
       :'<div class="tdph '+(a.gender==="M"?"tdm":"tdf")+'">'+ec(ini)+'</div>';
     html+='<tr onclick="openAlumniModal(this)" '+dataAttr+' data-alumni=\''+JSON.stringify(a).replace(/'/g,"&#39;")+'\'>'
-      +'<td style="text-align:center;color:var(--t3);font-size:9px;font-weight:700;">'+( i+1)+'</td>'
+      +'<td style="text-align:center;color:var(--t3);font-size:9px;font-weight:700;">'+(i+1)+'</td>'
       +'<td>'+ph+'</td>'
       +'<td>'
         +'<div style="font-weight:600;color:var(--t1);font-size:12px;white-space:normal;word-break:break-word;line-height:1.3;">'+ec(a.name)+'</div>'
@@ -1211,48 +1441,48 @@ function buildTbl(rows,tbId,nrId,totId,shoId,mId,fId,cn){
   });
   tb.innerHTML=html;
 }
+
 function renderP(){
   if(!curC)return;
-  if(curC==="__ALL__"){renderAllP();return;}
   buildTbl(getRows(curC,"pin","d"),"ptb","pnr","p-tot","p-sho","p-m","p-f",curC);
 }
 function renderM(){
   if(!curC)return;
-  if(curC==="__ALL__"){renderAllM();return;}
   buildTbl(getRows(curC,"min","m"),"mtb","mnr","m-tot","m-sho","m-m","m-f",curC);
 }
 
-/* ══ ALUMNI DETAIL MODAL ══════════════════════════════════════ */
+/* ══ ALUMNI DETAIL MODAL — redesigned ═══════════════════════ */
 function openAlumniModal(row){
   var raw=row.getAttribute("data-alumni");
   if(!raw)return;
   var a;
   try{a=JSON.parse(raw);}catch(e){return;}
+  openAlumniModalDirect(a);
+}
+
+function openAlumniModalDirect(a){
+  if(!a)return;
   /* Photo */
   var ini=a.name.split(" ").map(function(w){return w[0]||"";}).slice(0,2).join("");
   var photoEl=document.getElementById("am-photo");
   photoEl.innerHTML=a.photo?'<img src="'+ec(a.photo)+'" alt="'+ec(a.name)+'"/>':'<span>'+ec(ini)+'</span>';
   document.getElementById("am-name").textContent=a.name;
   document.getElementById("am-role").textContent=(a.designation||"")+(a.company?" at "+a.company:"");
-  /* Body */
-  var rows=[
-    {icon:"🏢",label:"Company",value:a.company||"—",sub:a.designation||""},
-    {icon:"📍",label:"Location",value:a.location||"—",sub:gf(a.country)+" "+a.country},
-    {icon:"🎓",label:"Batch Year",value:a.batch||"—",sub:""},
-    {icon:"👤",label:"Gender",value:a.gender==="M"?"Male":"Female",sub:""},
-    {icon:"🏡",label:"District",value:a.district||"—",sub:"Tamil Nadu, India"}
-  ];
-  var html="";
-  rows.forEach(function(r,i){
-    if(i>0)html+='<div class="am-divider"></div>';
-    html+='<div class="am-row">'
-      +'<div class="am-icon">'+r.icon+'</div>'
-      +'<div class="am-info">'
-      +'<div class="am-label">'+r.label+'</div>'
-      +'<div class="am-value">'+ec(r.value)+'</div>'
-      +(r.sub?'<div class="am-value sub">'+ec(r.sub)+'</div>':'')
-      +'</div></div>';
-  });
+  /* Tags */
+  var tagsHtml="";
+  if(a.batch)tagsHtml+='<span class="am-tag">🎓 '+ec(a.batch)+'</span>';
+  tagsHtml+='<span class="am-tag">'+(a.gender==="M"?"♂ Male":"♀ Female")+'</span>';
+  if(a.country)tagsHtml+='<span class="am-tag">'+gf(a.country)+' '+ec(a.country)+'</span>';
+  document.getElementById("am-tags").innerHTML=tagsHtml;
+  /* Body — sections */
+  var html='<div class="am-section">';
+  html+='<div class="am-row"><div class="am-icon">🏢</div><div class="am-info"><div class="am-label">Company</div><div class="am-value">'+ec(a.company||"—")+'</div></div></div>';
+  html+='<div class="am-row"><div class="am-icon">💼</div><div class="am-info"><div class="am-label">Designation</div><div class="am-value">'+ec(a.designation||"—")+'</div></div></div>';
+  html+='</div>';
+  html+='<div class="am-section">';
+  html+='<div class="am-row"><div class="am-icon">📍</div><div class="am-info"><div class="am-label">Location</div><div class="am-value">'+ec(a.location||"—")+'</div><div class="am-value sub">'+gf(a.country)+' '+ec(a.country||"")+'</div></div></div>';
+  html+='<div class="am-row"><div class="am-icon">🏡</div><div class="am-info"><div class="am-label">Home District</div><div class="am-value">'+ec(a.district||"—")+'</div><div class="am-value sub">Tamil Nadu, India 🇮🇳</div></div></div>';
+  html+='</div>';
   document.getElementById("am-body").innerHTML=html;
   document.getElementById("amodal-bg").classList.add("on");
 }
@@ -1266,19 +1496,20 @@ function toggleTheme(){
   dark=!dark;
   document.documentElement.setAttribute("data-theme",dark?"dark":"light");
   document.getElementById("theme-btn").textContent=dark?"☀️":"🌙";
-  /* update ocean */
   var mode=mapMode();
-  var oceanCols={"normal-light":"#aadaff","normal-dark":"#0e2a45","terrain-light":"#93c9e3","terrain-dark":"#0a1e2e","satellite-light":"#1a3550","satellite-dark":"#060e18"};
-  var theme=isDark()?"dark":"light";
-  if(oceanRect)oceanRect.setStyle({fillColor:oceanCols[mode+"-"+theme]||"#aadaff"});
+  if(mode!=="satellite"){
+    var oceanCols={"normal-light":"#93c9e3","normal-dark":"#0a1e2e","satellite-light":"#0d1b2a","satellite-dark":"#060e18"};
+    var theme=isDark()?"dark":"light";
+    if(oceanRect)oceanRect.setStyle({fillColor:oceanCols[mode+"-"+theme]||"#93c9e3"});
+  }
   if(gjL)gjL.setStyle(cStyle);
   buildScaleLegend();
   if(map)setTimeout(addLabels,50);
+  if(window.innerWidth<768)addMobileCountryBadges();
 }
 
 /* ══ MAIN MAP ════════════════════════════════════════════════ */
 var map=null,gjL=null,oceanRect=null,labelsLayer=null,cityLayer=null;
-/* Cache GeoJSON so we only fetch ONCE — reused by flight animation */
 var GEO_CACHE=null;
 
 function countryTotal(cn){
@@ -1291,33 +1522,31 @@ function countryFiltered(cn){
 function cStyle(f){
   var cn=f.properties.ADMIN||f.properties.name||f.properties.NAME||"";
   var tot=countryTotal(cn);
-  /* Only alumni countries get colour */
   if(tot===0){
+    var borderCol=getComputedStyle(document.documentElement).getPropertyValue("--border-empty").trim();
+    var landCol=getComputedStyle(document.documentElement).getPropertyValue("--land-empty").trim()||"#f2efe9";
+    /* In satellite mode, make empty countries semi-transparent over tile */
+    var isSat=mapMode()==="satellite";
     return{
-      fillColor:"var(--land-empty)",  /* CSS var resolved at paint time */
-      fillColor:getComputedStyle(document.documentElement).getPropertyValue("--land-empty").trim()||"#f2efe9",
-      fillOpacity:0.85,
-      color:getComputedStyle(document.documentElement).getPropertyValue("--border-empty").trim()||"#c8c8c8",
-      weight:0.5,opacity:1
+      fillColor:landCol,
+      fillOpacity:isSat?0.35:0.85,
+      color:borderCol||"#888",
+      weight:isSat?0.3:0.5,opacity:isSat?0.4:1
     };
   }
-  /* Alumni country — use filtered count if filter active, else total */
   var cnt=nAct()>0?countryFiltered(cn):tot;
   var col=getCountryColor(cn);
-  /* if filter active but this country has 0 filtered → dim */
   if(nAct()>0&&cnt===0){
     return{fillColor:isDark()?"#2a2d30":"#e8e8e8",fillOpacity:0.35,
       color:isDark()?"#3a3d42":"#b0a898",weight:0.5,opacity:1};
   }
-  /* In density modes, use count-based color */
   if(mapMode()!=="normal"){col=getDensityColor(cnt)||col;}
   return{
-    fillColor:col||"#43a047",fillOpacity:0.88,
-    color:"rgba(255,255,255,.5)",
+    fillColor:col||"#43a047",fillOpacity:mapMode()==="satellite"?0.75:0.88,
+    color:mapMode()==="satellite"?"rgba(255,255,255,.7)":"rgba(255,255,255,.5)",
     weight:1.5,opacity:1
   };
 }
-
 
 function onEach(f,layer){
   var cn=f.properties.ADMIN||f.properties.name||f.properties.NAME||"";
@@ -1349,12 +1578,9 @@ function onEach(f,layer){
     return tip;
   }
 
-  /* Bind initial tooltip so it works immediately */
   layer.bindTooltip(buildTip(),{sticky:true,opacity:1,className:"mtt"});
-
   layer.on({
     mouseover:function(e){
-      /* Rebuild with latest filter state */
       layer.unbindTooltip();
       layer.bindTooltip(buildTip(),{sticky:true,opacity:1,className:"mtt"});
       layer.openTooltip(e.latlng);
@@ -1367,7 +1593,8 @@ function onEach(f,layer){
       if(gjL)gjL.resetStyle(layer);
     },
     click:function(){
-      if(tot>0)openC(cn);
+      var cnt=nAct()>0?countryFiltered(cn):tot;
+      if(cnt>0)openC(cn);
       else if(window.innerWidth>=768&&document.getElementById("panel").classList.contains("open"))closePanel();
     }
   });
@@ -1388,7 +1615,6 @@ function refLayers(){
 function addLabels(){
   if(labelsLayer){try{map.removeLayer(labelsLayer);}catch(e){}labelsLayer=null;}
   labelsLayer=L.layerGroup();
-  /* Only label countries that have alumni */
   ALUMNI_COUNTRIES.forEach(function(cn){
     var center=CENT[cn];if(!center)return;
     var lbl=L.marker([center[0],center[1]],{
@@ -1403,12 +1629,11 @@ function addLabels(){
   chkZ();
 }
 
-/* City-level dot pins — specific locations from data */
+/* City-level dot pins */
 function addCityPins(){
   if(cityLayer){try{map.removeLayer(cityLayer);}catch(e){}cityLayer=null;}
   cityLayer=L.layerGroup();
   var filtered=getFiltered();
-  /* Group by location */
   var locMap={};
   filtered.forEach(function(a){
     var key=a.location;
@@ -1418,7 +1643,7 @@ function addCityPins(){
   });
   Object.keys(locMap).forEach(function(loc){
     var coords=CITY_COORDS[loc];
-    if(!coords)return; /* skip if no known coords */
+    if(!coords)return;
     var group=locMap[loc];
     var tot=group.alumni.length;
     var col=getDensityColor(countryTotal(group.country))||"#4285f4";
@@ -1429,7 +1654,7 @@ function addCityPins(){
       interactive:true
     });
     var names=group.alumni.slice(0,3).map(function(a){return a.name;}).join(", ");
-    if(group.alumni.length>3)names+=" +"+( group.alumni.length-3)+" more";
+    if(group.alumni.length>3)names+=" +"+(group.alumni.length-3)+" more";
     marker.bindTooltip(
       '<div class="mtt-name">📍 '+ec(loc)+'</div>'
       +'<div class="mtt-row"><span class="mtt-count">'+tot+'</span> alumni here<br><span style="color:var(--t2);font-size:10px">'+ec(names)+'</span></div>',
@@ -1439,13 +1664,12 @@ function addCityPins(){
     cityLayer.addLayer(marker);
   });
   cityLayer.addTo(map);
-  /* Show city pins only when zoomed in */
   function chkZ(){var z=map.getZoom();if(z>=3)map.addLayer(cityLayer);else map.removeLayer(cityLayer);}
   map.off("zoomend",chkZ).on("zoomend",chkZ);
   chkZ();
 }
 
-/* ══ SMALL COUNTRY DOTS ══════════════════════════════════════ */
+/* Small country dots */
 var SMALL_COUNTRIES=["Singapore","Malaysia","Qatar","Bahrain","Taiwan",
   "Netherlands","Belgium","Switzerland","Oman","UAE","Israel","Jordan","Kuwait"];
 
@@ -1460,8 +1684,8 @@ function addSmallCountryDots(){
     L.marker([center[0],center[1]],{
       icon:L.divIcon({
         className:"",
-        html:'<div style="width:16px;height:16px;border-radius:50%;background:'+col+';border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer;transition:transform .15s;" title="'+cn+'"></div>',
-        iconAnchor:[8,8]
+        html:'<div style="width:12px;height:12px;border-radius:50%;background:'+col+';border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer;transition:transform .15s;" title="'+cn+'"></div>',
+        iconAnchor:[6,6]
       }),
       interactive:true,zIndexOffset:600
     })
@@ -1477,11 +1701,10 @@ function addSmallCountryDots(){
   });
 }
 
-/* VIT campus pin — uses your photo from GitHub */
+/* VIT campus pin */
 function addVITPin(){
-  /* Photo URL from your GitHub repo */
-  var photoUrl="https://raw.githubusercontent.com/vit-stars/data/main/photos/vit.jpg";
-  var pinHtml='<div style="'
+  var photoUrl="https://raw.githubusercontent.com/vit-stars/data/main/photos/logo.png";
+  var pinHtml='<div onclick="openAllAlumni()" style="'
     +'width:46px;height:46px;'
     +'border-radius:50% 50% 50% 0;'
     +'border:3px solid #fff;'
@@ -1493,9 +1716,10 @@ function addVITPin(){
     +'<img src="'+photoUrl+'" '
     +'style="width:100%;height:100%;object-fit:cover;transform:rotate(45deg);display:block;" '
     +'onerror="this.parentNode.style.background=\'linear-gradient(135deg,#1a73e8,#7c3aed)\';this.parentNode.innerHTML=\'<span style=\\"transform:rotate(45deg);display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#fff;font-weight:800;font-size:11px;\\">VIT</span>\';"/>'
-    +'</div>';
+    +'</div>'
++'<div style="text-align:center;align-item:center;margin-top:4px;font-size:10px;font-weight:700;color:#fff;font-family:Inter,sans-serif;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;white-space:nowrap;">VIT</div>';
   L.marker(VIT,{
-    icon:L.divIcon({className:"",html:pinHtml,iconAnchor:[23,46]}),
+    icon:L.divIcon({className:"",html:pinHtml,iconAnchor:[23,52]}),
     interactive:true,zIndexOffset:1000
   }).addTo(map)
   .bindTooltip(
@@ -1505,29 +1729,18 @@ function addVITPin(){
   );
 }
 
-/* ══ ANTIMERIDIAN FIX ════════════════════════════════════════
-   Removes the ugly line across the map above USA/Russia.
-   Leaflet draws a straight line when polygon coordinates cross
-   the ±180° boundary. We fix this by shifting coordinates so
-   no single ring has a jump > 180° between consecutive points.
-*/
+/* Antimeridian fix */
 function fixAntimeridian(geojson){
   function fixRing(ring){
     for(var i=1;i<ring.length;i++){
-      var prev=ring[i-1][0];
-      var curr=ring[i][0];
-      var diff=curr-prev;
-      if(diff>180) ring[i][0]-=360;
-      else if(diff<-180) ring[i][0]+=360;
+      var prev=ring[i-1][0];var curr=ring[i][0];var diff=curr-prev;
+      if(diff>180)ring[i][0]-=360;else if(diff<-180)ring[i][0]+=360;
     }
     return ring;
   }
   function fixCoords(coords,type){
-    if(type==="Polygon"){
-      return coords.map(fixRing);
-    } else if(type==="MultiPolygon"){
-      return coords.map(function(poly){return poly.map(fixRing);});
-    }
+    if(type==="Polygon"){return coords.map(fixRing);}
+    else if(type==="MultiPolygon"){return coords.map(function(poly){return poly.map(fixRing);});}
     return coords;
   }
   geojson.features=geojson.features.map(function(f){
@@ -1538,16 +1751,37 @@ function fixAntimeridian(geojson){
   return geojson;
 }
 
+/* ══ INIT MAP ════════════════════════════════════════════════
+   ★ TO CHANGE INITIAL MAP VIEW:
+     center: [latitude, longitude]
+       - [20, 20]  = World overview (default)
+       - [20, 80]  = India/Asia centered
+       - [48, 10]  = Europe centered
+       - [30, 45]  = Middle East centered
+       - [40,-100] = USA centered
+     zoom: number (1.5 = zoomed out, 4 = zoomed in)
+       - 2.4 = default world view
+       - 3.0 = slightly more zoomed
+   ★ Example: center:[20,80], zoom:3.0 for India-centered view
+*/
 function initMap(){
   map=L.map("map",{
-    center:[10,10],zoom:2.4,minZoom:1.5,maxZoom:10,
+    /* ▼▼▼ CHANGE INITIAL MAP VIEW HERE ▼▼▼ */
+    center:[30,10],zoom:2.4,
+    /* ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲ */
+    minZoom:1.5,maxZoom:10,
     scrollWheelZoom:false,touchZoom:true,doubleClickZoom:true,tap:true,
     zoomControl:true,attributionControl:false,
     zoomSnap:0.25,zoomDelta:0.25,
     maxBounds:[[-85,-210],[85,210]],maxBoundsViscosity:0.9
   });
   map.zoomControl.setPosition("topright");
-  /* Ctrl+scroll zoom */
+
+  /* Update mobile badges on move/zoom */
+  map.on("moveend zoomend",function(){
+    if(window.innerWidth<768)addMobileCountryBadges();
+  });
+
   document.getElementById("map").addEventListener("wheel",function(e){
     if(e.ctrlKey||e.metaKey){
       e.preventDefault();
@@ -1555,17 +1789,14 @@ function initMap(){
     }
   },{passive:false});
 
-  /* Ocean base layer */
   oceanRect=L.rectangle([[-90,-180],[90,180]],{
-    color:"none",fillColor:"#aadaff",fillOpacity:1,interactive:false
+    color:"none",fillColor:"#93c9e3",fillOpacity:1,interactive:false
   }).addTo(map);
 
   setLdr("Loading world map…");
-  /* Try jsdelivr first (reliable CDN, no CORS), then raw.githubusercontent as fallback */
   fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
   .then(function(r){if(!r.ok)throw 0;return r.json();})
   .then(function(w){
-    /* world-atlas uses topojson — load the client library */
     if(typeof topojson!=="undefined"){
       buildFromTopo(w);
     } else {
@@ -1610,10 +1841,11 @@ function renderGeo(g){
   updStats(getFiltered());
   addVITPin();
   addSmallCountryDots();
-  setTimeout(addLabels,300);
+  if(window.innerWidth>=768) setTimeout(addLabels,300);
   setTimeout(addCityPins,300);
+  setTimeout(function(){if(window.innerWidth<768)addMobileCountryBadges();},500);
   buildScaleLegend();
-  document.getElementById("scale-leg").style.display="none"; /* hidden in normal mode */
+  document.getElementById("scale-leg").style.display="none";
   runFlightAnimation();
 }
 
@@ -1622,7 +1854,6 @@ var fltMap=null,fltDone=false;
 
 function runFlightAnimation(){
   document.getElementById("flight-screen").classList.add("active");
-  /* Phase 1: 3s hero → then map phase */
   setTimeout(startMapPhase,3000);
 }
 
@@ -1632,17 +1863,14 @@ function startMapPhase(){
   document.getElementById("fui").style.display="flex";
 
   var isMob=window.innerWidth<768;
-  /* Mobile: start centered ON Vellore at zoom 5 so it fills screen */
   fltMap=L.map("fmap",{
-    center:VIT,
-    zoom:isMob?5:4,
+    center:VIT,zoom:isMob?5:4,
     scrollWheelZoom:false,touchZoom:false,doubleClickZoom:false,
     dragging:false,zoomControl:false,attributionControl:false,
     keyboard:false,tap:false,zoomSnap:0.1
   });
   L.rectangle([[-90,-180],[90,180]],{color:"none",fillColor:"#0d1f35",fillOpacity:1,interactive:false}).addTo(fltMap);
 
-  /* USE CACHED GeoJSON — NO second fetch, NO CORS issue */
   function useGeo(geo){
     if(geo){
       L.geoJSON(geo,{
@@ -1659,7 +1887,6 @@ function startMapPhase(){
         },interactive:false
       }).addTo(fltMap);
     }
-    /* VIT pulse marker */
     L.marker(VIT,{
       icon:L.divIcon({className:"",html:'<div class="vit-pulse"></div>',iconAnchor:[9,9]}),
       interactive:false,zIndexOffset:1000
@@ -1671,13 +1898,11 @@ function startMapPhase(){
         iconAnchor:[0,6]
       }),interactive:false,zIndexOffset:1001
     }).addTo(fltMap);
-    /* Fly out to world view */
-    fltMap.flyTo([20,20],2,{animate:true,duration:1.4,easeLinearity:0.3});
+    fltMap.flyTo([20,10],2,{animate:true,duration:1.4,easeLinearity:0.3});
     setTimeout(function(){if(!fltDone)startArcs();},1500);
   }
-  /* Use cache if available (always will be since renderGeo runs first) */
   if(GEO_CACHE){useGeo(GEO_CACHE);}
-  else{useGeo(null);} /* fallback: no background map, still draw arcs */
+  else{useGeo(null);}
 }
 
 function latLngToSVG(lat,lng){
@@ -1699,7 +1924,6 @@ function startArcs(){
   defs.innerHTML='<filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
   svg.appendChild(defs);
 
-  /* Get unique destinations ONLY from data (not all countries) */
   var destinations=[];
   var seen={};
   ALUMNI.forEach(function(a){
@@ -1707,7 +1931,7 @@ function startArcs(){
   });
 
   var total=destinations.length;
-  var totalMs=4800; /* 5s total − 0.2s buffer */
+  var totalMs=4800;
   var stagger=totalMs/total;
   var routeMs=Math.min(stagger*1.2,800);
   var arrived=0;
@@ -1732,7 +1956,6 @@ function drawArc(svg,cn,duration,col,onDone){
   var cp=controlPt(VIT[0],VIT[1],dest[0],dest[1]);
   var cpPt=latLngToSVG(cp[0],cp[1]);
 
-  /* Arc trail */
   var trail=document.createElementNS("http://www.w3.org/2000/svg","path");
   var d="M"+from.x.toFixed(1)+","+from.y.toFixed(1)+" Q"+cpPt.x.toFixed(1)+","+cpPt.y.toFixed(1)+" "+to.x.toFixed(1)+","+to.y.toFixed(1);
   trail.setAttribute("d",d);trail.setAttribute("fill","none");
@@ -1742,7 +1965,6 @@ function drawArc(svg,cn,duration,col,onDone){
   var len;try{len=trail.getTotalLength();}catch(e){len=300;}
   trail.setAttribute("stroke-dasharray",len);trail.setAttribute("stroke-dashoffset",len);
 
-  /* Plane emoji */
   var plane=document.createElementNS("http://www.w3.org/2000/svg","text");
   plane.setAttribute("font-size","14");plane.setAttribute("text-anchor","middle");plane.setAttribute("dominant-baseline","middle");
   plane.textContent="✈";
@@ -1765,7 +1987,6 @@ function drawArc(svg,cn,duration,col,onDone){
     if(pct<1){requestAnimationFrame(step);}
     else{
       plane.setAttribute("opacity","0");
-      /* Country name label — white text, black outline, always readable */
       var lbl=document.createElementNS("http://www.w3.org/2000/svg","text");
       lbl.setAttribute("x",to.x.toFixed(1));
       lbl.setAttribute("y",(to.y-14).toFixed(1));
@@ -1780,7 +2001,6 @@ function drawArc(svg,cn,duration,col,onDone){
       lbl.setAttribute("opacity","0");
       lbl.textContent=gf(cn)+" "+cn;
       svg.appendChild(lbl);
-      /* Arrival pulse */
       var dot=document.createElementNS("http://www.w3.org/2000/svg","circle");
       dot.setAttribute("cx",to.x.toFixed(1));dot.setAttribute("cy",to.y.toFixed(1));
       dot.setAttribute("r","5");dot.setAttribute("fill",col);dot.setAttribute("filter","url(#glow)");
@@ -1816,7 +2036,8 @@ function skipFlight(){finishFlight();}
 /* ══ INIT ════════════════════════════════════════════════════ */
 function initApp(){
   var seen={};
-  ALUMNI.forEach(function(a){if(a.country)seen[a.country]=1;});
+  /* FIX: Exclude India from ALUMNI_COUNTRIES (it's the origin, not abroad) */
+  ALUMNI.forEach(function(a){if(a.country&&a.country!=="India")seen[a.country]=1;});
   ALUMNI_COUNTRIES=Object.keys(seen).sort();
   assignCountryColors();
   buildFilters();
@@ -1824,7 +2045,109 @@ function initApp(){
   initMap();
 }
 
-let isDataLoaded = false;
+/* ══ COUNTRY CENTRES ══════════════════════════════════════════ */
+var CENT={
+  "United States of America":[38,-97],"Germany":[51,10],"Singapore":[1.35,103.82],
+  "UAE":[24.47,54.37],"Saudi Arabia":[24,45],"United Kingdom":[54,-2],
+  "Canada":[57,-96],"Australia":[-25,135],"Japan":[36.5,138],
+  "France":[46.5,2],"Netherlands":[52.3,5.3],"Sweden":[62,17],
+  "Switzerland":[47,8.3],"Qatar":[25.3,51.2],"Taiwan":[23.7,121],
+  "Oman":[22,57.5],"India":[22,79],"China":[35,105],
+  "South Korea":[37,127.5],"Brazil":[-10,-53],"Russia":[62,94],
+  "South Africa":[-29,25],"Norway":[65,14],"Denmark":[56,9.5],
+  "Finland":[64,26],"Belgium":[50.5,4.5],"Austria":[47.5,14.5],
+  "Spain":[40,-4],"New Zealand":[-41,174],"Ireland":[53.5,-8],
+  "Poland":[52,20],"Turkey":[39,35],"Greece":[39.5,22],
+  "Malaysia":[4,109],"Indonesia":[-2,118],"Thailand":[15,101],
+  "Philippines":[13,122],"Vietnam":[16,107],"Egypt":[27,30],
+  "Pakistan":[30,70],"Sri Lanka":[7.9,80.7],"Romania":[46,25],
+  "Hungary":[47,19],"Czech Republic":[50,15.5],"Israel":[31.5,34.8],
+  "Jordan":[31,36],"Kuwait":[29.3,47.7],"Bahrain":[26,50.5],"Portugal":[39.5,-8],
+  "Italy":[41.9,12.5]
+};
+
+var CITY_COORDS={
+  "California, USA":[36.7,-119.4],"Seattle, USA":[47.6,-122.3],
+  "Texas, USA":[31.9,-99.9],"New Jersey, USA":[40.1,-74.7],
+  "Washington, USA":[47.5,-120.5],"Dubai, UAE":[25.2,55.27],
+  "Abu Dhabi, UAE":[24.45,54.37],"Sharjah, UAE":[25.35,55.42],
+  "Hannover, Germany":[52.37,9.73],"Stuttgart, Germany":[48.78,9.18],
+  "Berlin, Germany":[52.52,13.4],"Riyadh, Saudi Arabia":[24.68,46.72],
+  "Dammam, Saudi Arabia":[26.43,50.1],"Singapore":[1.35,103.82],
+  "London, UK":[51.5,-0.12],"Sydney, Australia":[-33.8,151.2],
+  "Melbourne, Australia":[-37.8,144.96],"Taipei, Taiwan":[25.03,121.56],
+  "Stockholm, Sweden":[59.33,18.06],"Eindhoven, Netherlands":[51.44,5.47],
+  "Tokyo, Japan":[35.68,139.69],"Doha, Qatar":[25.28,51.53],
+  "Muscat, Oman":[23.58,58.4],"Zurich, Switzerland":[47.37,8.54],
+  "Toronto, Canada":[43.65,-79.38],"Vancouver, Canada":[49.25,-123.1],
+  "Rome, Italy":[41.9,12.5]
+};
+
+var VIT=[12.97,79.15];
+
+/* ══ DATA ════════════════════════════════════════════════════ */
+var ALUMNI=[];
+var CONFIG={
+  GH_USER:"YOUR_GITHUB_USERNAME",
+  GH_REPO:"vit-alumni-data",
+  GH_TOKEN:"YOUR_READ_ONLY_TOKEN_HERE"
+};
+function loadData(){
+  if(isDataLoaded)return;
+  isDataLoaded=true;
+  fetch("https://raw.githubusercontent.com/vit-stars/data/main/abroad_alumni.json")
+  .then(function(r){
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    return r.json();
+  })
+  .then(function(d){
+    var all=d;
+    ALUMNI=all
+      .filter(function(s){return s.country && s.country!=="";})
+      .map(function(s){return{
+        name:s.name||"",
+        gender:s.gender||"M",
+        district:s.district||"",
+        company:s.company||"",
+        designation:s.designation||"",
+        location:s.location||"",
+        country:s.country||"",
+        batch:s.batch||"",
+        photo:s.photo||""
+      };});
+    initApp();
+  })
+  .catch(function(err){
+    console.warn("GitHub fetch failed, using sample data:",err);
+    ALUMNI=sample();
+    initApp();
+  });
+}
+function setLdr(msg){var el=document.getElementById("ldr-msg");if(el)el.textContent=msg;}
+function hideLdr(){
+  var l=document.getElementById("ldr");
+  if(!l||l.style.display==="none")return;
+  l.classList.add("hide");
+  setTimeout(function(){l.style.display="none";},600);
+}
+setTimeout(function(){hideLdr();},12000);
+
+function sample(){
+  return[
+    {name:"Arjun Krishnamurthy",gender:"M",district:"Vellore",company:"Google",designation:"Software Engineer",location:"California, USA",country:"United States of America",batch:"2008",photo:""},
+    {name:"Priya Sharma",gender:"F",district:"Chennai",company:"Microsoft",designation:"Product Manager",location:"Seattle, USA",country:"United States of America",batch:"2010",photo:""},
+    {name:"Ravi Subramanian",gender:"M",district:"Coimbatore",company:"Amazon",designation:"SDE II",location:"New Jersey, USA",country:"United States of America",batch:"2009",photo:""},
+    {name:"Anitha Rajan",gender:"F",district:"Salem",company:"Apple",designation:"UX Engineer",location:"California, USA",country:"United States of America",batch:"2012",photo:""},
+    {name:"Karthik Balaji",gender:"M",district:"Madurai",company:"Meta",designation:"Data Scientist",location:"Texas, USA",country:"United States of America",batch:"2011",photo:""},
+    {name:"Deepa Nair",gender:"F",district:"Trichy",company:"IBM",designation:"Cloud Architect",location:"Washington, USA",country:"United States of America",batch:"2013",photo:""},
+    {name:"Siva Prakash",gender:"M",district:"Vellore",company:"Siemens",designation:"Project Engineer",location:"Hannover, Germany",country:"Germany",batch:"2008",photo:""},
+    {name:"Ananya Krishnan",gender:"F",district:"Erode",company:"SAP",designation:"Business Analyst",location:"Berlin, Germany",country:"Germany",batch:"2014",photo:""},
+    {name:"Sathish Babu",gender:"M",district:"Tirunelveli",company:"Bosch",designation:"Embedded Engineer",location:"Stuttgart, Germany",country:"Germany",batch:"2010",photo:""},
+    {name:"Bharath Selvan",gender:"M",district:"Thanjavur",company:"Grab",designation:"Backend Engineer",location:"Singapore",country:"Singapore",batch:"2010",photo:""}
+];
+}
+
+var isDataLoaded = false;
 loadData();
 </script>
 </body>
